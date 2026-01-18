@@ -76,3 +76,115 @@ function Test-GitHubToken {
     Write-Host "Token validation failed" -ForegroundColor Red
     return $false
 }
+
+function Get-GitHubRunners {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Token,
+        [Parameter(Mandatory=$true)]
+        [string]$Repository
+    )
+    
+    try {
+        $headers = @{
+            "Authorization" = "token $Token"
+            "Accept" = "application/vnd.github.v3+json"
+        }
+        
+        $response = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repository/actions/runners" -Headers $headers -Method Get
+        return $response.runners
+    } catch {
+        Write-Host "Error fetching runners: $_" -ForegroundColor Red
+        return @()
+    }
+}
+
+function Remove-GitHubRunner {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Token,
+        [Parameter(Mandatory=$true)]
+        [string]$Repository,
+        [Parameter(Mandatory=$true)]
+        [int]$RunnerId
+    )
+    
+    try {
+        $headers = @{
+            "Authorization" = "token $Token"
+            "Accept" = "application/vnd.github.v3+json"
+        }
+        
+        Invoke-RestMethod -Uri "https://api.github.com/repos/$Repository/actions/runners/$RunnerId" -Headers $headers -Method Delete | Out-Null
+        return $true
+    } catch {
+        Write-Host "Error removing runner $RunnerId : $_" -ForegroundColor Red
+        return $false
+    }
+}
+
+function Remove-OfflineRunners {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Token,
+        [Parameter(Mandatory=$true)]
+        [string]$Repository,
+        [Parameter(Mandatory=$false)]
+        [switch]$DryRun
+    )
+    
+    Write-Host ""
+    Write-Host "=== Cleanup Offline Runners ===" -ForegroundColor Cyan
+    Write-Host ""
+    
+    $runners = Get-GitHubRunners -Token $Token -Repository $Repository
+    
+    if ($runners.Count -eq 0) {
+        Write-Host "No runners found" -ForegroundColor Yellow
+        return
+    }
+    
+    $offlineRunners = $runners | Where-Object { $_.status -eq "offline" }
+    
+    if ($offlineRunners.Count -eq 0) {
+        Write-Host "No offline runners found" -ForegroundColor Green
+        return
+    }
+    
+    Write-Host "Found $($offlineRunners.Count) offline runner(s):" -ForegroundColor Yellow
+    Write-Host ""
+    
+    foreach ($runner in $offlineRunners) {
+        Write-Host "  - $($runner.name) (ID: $($runner.id))" -ForegroundColor Gray
+    }
+    
+    Write-Host ""
+    
+    if ($DryRun) {
+        Write-Host "Dry run mode - no runners will be removed" -ForegroundColor Yellow
+        return
+    }
+    
+    $confirm = Read-Host "Remove all offline runners? (y/N)"
+    if ($confirm -ne 'y') {
+        Write-Host "Cancelled" -ForegroundColor Yellow
+        return
+    }
+    
+    Write-Host ""
+    $removedCount = 0
+    
+    foreach ($runner in $offlineRunners) {
+        Write-Host "Removing: $($runner.name)..." -ForegroundColor Yellow
+        if (Remove-GitHubRunner -Token $Token -Repository $Repository -RunnerId $runner.id) {
+            Write-Host "  $([char]0x2713) Removed" -ForegroundColor Green
+            $removedCount++
+        } else {
+            Write-Host "  $([char]0x2717) Failed" -ForegroundColor Red
+        }
+    }
+    
+    Write-Host ""
+    Write-Host "$([char]0x2713) Removed $removedCount of $($offlineRunners.Count) offline runner(s)" -ForegroundColor Green
+    Write-Host ""
+}

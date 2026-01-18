@@ -596,6 +596,11 @@ function Update-DockerRunner {
         Write-Host "Container ID: $($runner.ContainerId.Substring(0,12))" -ForegroundColor Gray
         Write-Host "Repository: $($Config.Repository)" -ForegroundColor White
         Write-Host ""
+        
+        # Auto-cleanup offline runners
+        Write-Host "Cleaning up offline runners..." -ForegroundColor Cyan
+        Remove-OfflineRunners -Token $Config.GitHubToken -Repository $Config.Repository -DryRun:$false
+        
         Write-Host "Check status: https://github.com/$($Config.Repository)/settings/actions/runners" -ForegroundColor Cyan
         Write-Host ""
         return $true
@@ -626,6 +631,7 @@ function Invoke-DockerManagement {
         Write-Host "8. Rebuild and restart runner (auto)"
         Write-Host "9. Restart container (quick fix)"
         Write-Host "10. Health check"
+        Write-Host "11. Cleanup offline runners from GitHub"
         Write-Host "0. Back"
         Write-Host ""
         
@@ -767,6 +773,9 @@ function Invoke-DockerManagement {
             "10" {
                 $containerName = Read-Host "Enter container ID or name"
                 Test-DockerRunnerHealth -ContainerIdOrName $containerName
+            }
+            "11" {
+                Remove-OfflineRunners -Token $Config.GitHubToken -Repository $Config.Repository
             }
         }
         
