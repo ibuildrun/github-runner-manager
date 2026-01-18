@@ -1,10 +1,6 @@
 # Runner configuration (contains sensitive data)
 .runner-config.json
 
-# Environment files with tokens
-.env.runner
-.env.runner.example
-
 # Git credentials (should not be here)
 *.git-credentials
 
