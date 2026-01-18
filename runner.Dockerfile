@@ -31,20 +31,15 @@ RUN apt-get update && apt-get install -y \
     php8.1-intl \
     && rm -rf /var/lib/apt/lists/*
 
-# Копирование entrypoint скрипта (до создания пользователя)
-COPY runner-multi-entrypoint.sh /tmp/entrypoint.sh
-RUN chmod +x /tmp/entrypoint.sh
-
 # Создание пользователя для раннера
 RUN useradd -m -s /bin/bash runner && \
     usermod -aG sudo runner && \
     usermod -aG docker runner && \
     echo "runner ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Перемещение entrypoint в правильное место с правильными правами
-RUN mv /tmp/entrypoint.sh /home/runner/entrypoint.sh && \
-    chown runner:runner /home/runner/entrypoint.sh && \
-    chmod +x /home/runner/entrypoint.sh
+# Копирование entrypoint скрипта с правильными правами (как root)
+COPY --chown=runner:runner runner-multi-entrypoint.sh /home/runner/entrypoint.sh
+RUN chmod +x /home/runner/entrypoint.sh
 
 # Установка Node.js 20 + npm
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
