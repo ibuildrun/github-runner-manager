@@ -129,9 +129,11 @@ trap cleanup EXIT
     New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
     
     try {
-        # Write files
-        $dockerfile | Set-Content -Path "$tempDir\Dockerfile" -Encoding UTF8
-        $entrypoint | Set-Content -Path "$tempDir\entrypoint.sh" -Encoding UTF8
+        # Write files with proper line endings for Linux
+        $dockerfile | Set-Content -Path "$tempDir\Dockerfile" -Encoding UTF8 -NoNewline
+        # For entrypoint.sh, use Unix line endings (LF only)
+        $entrypointBytes = [System.Text.Encoding]::UTF8.GetBytes($entrypoint -replace "`r`n", "`n")
+        [System.IO.File]::WriteAllBytes("$tempDir\entrypoint.sh", $entrypointBytes)
         
         # Build image
         Write-Host "Building Docker image..." -ForegroundColor Cyan
