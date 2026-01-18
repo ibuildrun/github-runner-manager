@@ -114,3 +114,4 @@ Write-Host "  3. View logs: docker logs -f universal-runner" -ForegroundColor Wh
 Write-Host ""
 Write-Host "Production URL: https://avyx.ibuildrun.ru" -ForegroundColor Cyan
 Write-Host ""
+Read-Host "Press any key to continue"

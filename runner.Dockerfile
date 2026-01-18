@@ -31,11 +31,20 @@ RUN apt-get update && apt-get install -y \
     php8.1-intl \
     && rm -rf /var/lib/apt/lists/*
 
+# Копирование entrypoint скрипта (до создания пользователя)
+COPY runner-multi-entrypoint.sh /tmp/entrypoint.sh
+RUN chmod +x /tmp/entrypoint.sh
+
 # Создание пользователя для раннера
 RUN useradd -m -s /bin/bash runner && \
     usermod -aG sudo runner && \
     usermod -aG docker runner && \
     echo "runner ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Перемещение entrypoint в правильное место с правильными правами
+RUN mv /tmp/entrypoint.sh /home/runner/entrypoint.sh && \
+    chown runner:runner /home/runner/entrypoint.sh && \
+    chmod +x /home/runner/entrypoint.sh
 
 # Установка Node.js 20 + npm
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
@@ -59,10 +68,6 @@ RUN curl -o actions-runner-linux-x64-2.331.0.tar.gz -L \
     https://github.com/actions/runner/releases/download/v2.331.0/actions-runner-linux-x64-2.331.0.tar.gz && \
     tar xzf actions-runner-linux-x64-2.331.0.tar.gz && \
     rm actions-runner-linux-x64-2.331.0.tar.gz
-
-# Копирование entrypoint скрипта
-COPY runner-multi-entrypoint.sh /home/runner/entrypoint.sh
-RUN chown runner:runner /home/runner/entrypoint.sh && chmod +x /home/runner/entrypoint.sh
 
 # Проверка версий
 RUN node --version && \
