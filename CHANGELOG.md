@@ -1,74 +1,114 @@
-# Changelog - AVYX Deploy
+# Changelog - GitHub Actions Self-Hosted Runner Manager
+
+## [3.0.0] - 2026-01-17
+
+### 🚀 Universal Runner Manager
+
+#### Added
+- 🔍 **Repository Search** - Search and select from your GitHub repositories via API
+- 🔐 **Flexible Token Storage** - Store token in environment variable, config file, or session only
+- ✅ **Token Validation** - Validates token before saving
+- 🎯 **Universal Support** - Works with any GitHub repository
+- 📊 **Enhanced Status** - Shows configuration info in status display
+- 🔄 **Configuration Persistence** - Saves settings across sessions
+- 🧹 **Clear Configuration** - Option to reset all settings
+- 📋 **Interactive Repository Browser** - Search through repositories with filtering
+
+#### Changed
+- 🔄 Renamed from "AVYX GitHub Actions Runner Manager" to "GitHub Actions Self-Hosted Runner Manager"
+- 🔄 Improved menu structure with categorized sections
+- 🔄 Enhanced error handling and user feedback
+- 🔄 Better security with multiple token storage methods
+- 🔄 Repository-specific scheduled task naming
+- 🔄 No longer requires manual configuration editing
+
+#### Removed
+- ❌ Hard-coded repository references
+- ❌ Requirement to manually edit configuration files
+
+#### Security
+- 🔒 Token validation before storage
+- 🔒 Multiple storage options for different security needs
+- 🔒 Base64 encoding for file storage (note: not encryption)
+- 🔒 Environment variable storage recommended for best security
+
+### Configuration File
+
+The script now creates `.runner-config.json` with:
+```json
+{
+  "Repository": "owner/repo-name",
+  "TokenStorage": "Environment|File|None",
+  "TokenEncrypted": "base64-encoded-token",
+  "LastUpdated": "2026-01-17T..."
+}
+```
+
+### Token Storage Options
+
+1. **Environment Variable** (Recommended)
+   - Stored in `GITHUB_RUNNER_TOKEN` user environment variable
+   - Persistent across sessions
+   - Most secure option
+
+2. **Configuration File**
+   - Stored in `.runner-config.json` (base64 encoded)
+   - Local to deploy directory
+   - Portable with project
+
+3. **Session Only**
+   - Not saved anywhere
+   - Must re-enter each time
+   - Most secure for temporary use
+
+### Migration from 2.x
+
+1. Run the new script: `.\runner.ps1`
+2. Configure token (Option 1) - choose storage method
+3. Select repository (Option 2) - search and select
+4. Existing runner installation will be detected
+5. Reinstall if needed to update configuration
+
+---
 
 ## [2.0.0] - 2026-01-17
 
-### 🎉 Полная переработка системы деплоя
+### 🎉 Complete Deploy System Overhaul
 
-#### Добавлено
-- ✅ Упрощенный workflow для деплоя через self-hosted runner
-- ✅ Использование SFTP/lftp для надежной загрузки на shared hosting
-- ✅ Автоматическое сохранение и восстановление `.env` между деплоями
-- ✅ Раздельная сборка frontend и backend в отдельных jobs
-- ✅ PowerShell скрипт `start.ps1` для быстрого запуска runner
-- ✅ Batch файл `start-runner.bat` для запуска одним кликом
-- ✅ Подробный `QUICK_START.md` с пошаговой инструкцией
-- ✅ Обновленный `README.md` с полной документацией
-- ✅ Установка `lftp` в Docker образ для SFTP деплоя
+#### Added
+- ✅ Simplified workflow for deploy via self-hosted runner
+- ✅ SFTP/lftp for reliable shared hosting uploads
+- ✅ Automatic `.env` save and restore between deploys
+- ✅ Separate frontend and backend builds in different jobs
+- ✅ PowerShell script `start.ps1` for quick runner start
+- ✅ Batch file `start-runner.bat` for one-click start
+- ✅ Detailed `QUICK_START.md` with step-by-step instructions
+- ✅ Updated `README.md` with full documentation
+- ✅ `lftp` installation in Docker image for SFTP deploy
 
-#### Изменено
-- 🔄 Workflow теперь использует artifacts для передачи собранных файлов
-- 🔄 Упрощена структура деплоя - убраны лишние fallback механизмы
-- 🔄 Улучшены health checks с более детальной информацией
-- 🔄 Telegram уведомления теперь показывают больше деталей
+#### Changed
+- 🔄 Workflow now uses artifacts for passing built files
+- 🔄 Simplified deploy structure - removed unnecessary fallback mechanisms
+- 🔄 Improved health checks with more detailed information
+- 🔄 Telegram notifications now show more details
 
-#### Удалено
-- ❌ Удален старый `deploy-new.yml` workflow
-- ❌ Убраны сложные SSH fallback механизмы
-- ❌ Удалена зависимость от webhook деплоя
+#### Removed
+- ❌ Removed old `deploy-new.yml` workflow
+- ❌ Removed complex SSH fallback mechanisms
+- ❌ Removed webhook deploy dependency
 
-#### Исправлено
-- 🐛 Исправлены проблемы с SSH подключением к REG.RU
-- 🐛 Исправлена загрузка файлов на shared hosting
-- 🐛 Исправлено сохранение `.env` между деплоями
-- 🐛 Исправлены права доступа к директориям storage
-
-### Структура деплоя
-
-```
-deploy/
-├── start-runner.bat          # Быстрый запуск (Windows)
-├── start.ps1                 # PowerShell скрипт запуска
-├── QUICK_START.md            # Быстрый старт гайд
-├── README.md                 # Полная документация
-├── CHANGELOG.md              # Этот файл
-├── docker-compose.yml        # Docker конфигурация
-├── runner.Dockerfile         # Docker образ runner
-├── runner-multi-entrypoint.sh # Entrypoint скрипт
-└── .env.runner.example       # Пример конфигурации
-```
-
-### Требования
-
-- Docker Desktop
-- GitHub Personal Access Token (repo, workflow)
-- GitHub Secrets:
-  - `HOSTING_PASSWORD`
-  - `TELEGRAM_BOT_TOKEN` (опционально)
-  - `TELEGRAM_ADMIN_CHAT_ID` (опционально)
-
-### Миграция с предыдущей версии
-
-1. Остановите старый runner: `docker-compose down`
-2. Обновите код: `git pull`
-3. Пересоздайте runner: `.\start-runner.bat`
-4. Проверьте статус на GitHub
+#### Fixed
+- 🐛 Fixed SSH connection issues to REG.RU
+- 🐛 Fixed file uploads to shared hosting
+- 🐛 Fixed `.env` preservation between deploys
+- 🐛 Fixed storage directory permissions
 
 ---
 
 ## [1.0.0] - 2026-01-15
 
-### Первая версия
-- Базовый self-hosted runner
-- Деплой через SSH/SCP
+### First Release
+- Basic self-hosted runner
+- Deploy via SSH/SCP
 - Webhook fallback
-- Telegram уведомления
+- Telegram notifications

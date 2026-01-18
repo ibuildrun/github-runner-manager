@@ -1,0 +1,21 @@
+# Runner configuration (contains sensitive data)
+.runner-config.json
+
+# Environment files with tokens
+.env.runner
+.env.runner.example
+
+# Git credentials (should not be here)
+*.git-credentials
+
+# Runner installation directory (if placed here)
+actions-runner/
+
+# PowerShell module cache
+*.psm1.cache
+
+# Windows thumbnail cache
+Thumbs.db
+
+# macOS
+.DS_Store
