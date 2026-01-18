@@ -19,49 +19,68 @@ function Test-SSHConnection {
     Write-Host "Testing SSH connection to ${UserName}@${HostName}:${Port}..." -ForegroundColor Yellow
     
     try {
-        # Create temporary script for SSH test
-        $testScript = @"
-`$password = ConvertTo-SecureString '$Password' -AsPlainText -Force
-`$credential = New-Object System.Management.Automation.PSCredential ('$UserName', `$password)
-
-try {
-    `$session = New-PSSession -HostName $HostName -Port $Port -UserName $UserName -SSHTransport -ErrorAction Stop
-    if (`$session) {
-        Remove-PSSession `$session
-        exit 0
-    }
-} catch {
-    # Try using plink if available
-    `$plinkTest = echo y | plink -P $Port $UserName@$HostName -pw '$Password' 'echo test' 2>&1
-    if (`$LASTEXITCODE -eq 0) {
-        exit 0
-    }
-    exit 1
-}
-exit 1
-"@
-        
-        $tempFile = [System.IO.Path]::GetTempFileName() + ".ps1"
-        $testScript | Set-Content $tempFile
-        
-        $result = & powershell -File $tempFile
-        Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
-        
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "$([char]0x2713) SSH connection successful!" -ForegroundColor Green
-            return $true
-        } else {
-            Write-Host "$([char]0x2717) SSH connection failed" -ForegroundColor Red
+        # First, check if port is accessible
+        $testSocket = New-Object System.Net.Sockets.TcpClient
+        try {
+            $testSocket.Connect($HostName, $Port)
+            $testSocket.Close()
+            Write-Host "$([char]0x2713) SSH port is accessible" -ForegroundColor Green
+        } catch {
+            Write-Host "$([char]0x2717) Cannot connect to SSH server" -ForegroundColor Red
             Write-Host "Please check:" -ForegroundColor Yellow
-            Write-Host "  - Host IP/hostname is correct" -ForegroundColor Gray
-            Write-Host "  - Port is correct (default: 22)" -ForegroundColor Gray
-            Write-Host "  - Username is correct" -ForegroundColor Gray
-            Write-Host "  - Password is correct" -ForegroundColor Gray
+            Write-Host "  - Host IP/hostname is correct: $HostName" -ForegroundColor Gray
+            Write-Host "  - Port is correct: $Port" -ForegroundColor Gray
             Write-Host "  - SSH server is running" -ForegroundColor Gray
+            Write-Host "  - Firewall allows connections" -ForegroundColor Gray
             return $false
         }
+        
+        # Check if SSH keys are already configured
+        Write-Host "Checking for existing SSH keys..." -ForegroundColor Yellow
+        $sshDir = "$env:USERPROFILE\.ssh"
+        $knownHostsFile = "$sshDir\known_hosts"
+        
+        # Try simple SSH command without password (using existing keys if any)
+        $testCommand = "ssh -o BatchMode=yes -o ConnectTimeout=5 -p $Port ${UserName}@${HostName} `"echo test`" 2>&1"
+        $result = cmd /c $testCommand
+        
+        if ($LASTEXITCODE -eq 0 -or $result -match "test") {
+            Write-Host "$([char]0x2713) SSH connection successful (using existing keys)" -ForegroundColor Green
+            Write-Host ""
+            Write-Host "Note: You already have SSH keys configured for this server" -ForegroundColor Cyan
+            Write-Host "Password authentication may not be needed" -ForegroundColor Cyan
+            return $true
+        }
+        
+        Write-Host ""
+        Write-Host "Automated password testing is not reliable on Windows" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "Please verify manually:" -ForegroundColor Cyan
+        Write-Host "  Run this command: ssh ${UserName}@${HostName}" -ForegroundColor White
+        Write-Host ""
+        
+        $manualTest = Read-Host "Can you connect manually with this command? (y/N)"
+        
+        if ($manualTest -eq "y" -or $manualTest -eq "Y") {
+            Write-Host "$([char]0x2713) Manual verification successful" -ForegroundColor Green
+            Write-Host "Credentials will be saved to GitHub Secrets" -ForegroundColor Cyan
+            return $true
+        } else {
+            Write-Host "$([char]0x2717) Please verify your credentials" -ForegroundColor Red
+            Write-Host ""
+            Write-Host "Check:" -ForegroundColor Yellow
+            Write-Host "  - Host: $HostName" -ForegroundColor Gray
+            Write-Host "  - Port: $Port" -ForegroundColor Gray
+            Write-Host "  - Username: $UserName" -ForegroundColor Gray
+            Write-Host "  - Password: (hidden)" -ForegroundColor Gray
+            return $false
+        }
+        
     } catch {
         Write-Host "$([char]0x2717) Error testing connection: $_" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Note: Automated SSH testing is limited on Windows" -ForegroundColor Yellow
+        Write-Host "If you can connect manually with 'ssh ${UserName}@${HostName}', the credentials are correct" -ForegroundColor Cyan
         return $false
     }
 }
