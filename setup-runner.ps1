@@ -62,8 +62,7 @@ switch ($Action) {
         
         # Extract
         Write-Host "Extracting runner..." -ForegroundColor Yellow
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($runnerZip, $InstallPath, $true)
+        Expand-Archive -Path $runnerZip -DestinationPath $InstallPath -Force
         
         # Get token
         Write-Host "Getting registration token..." -ForegroundColor Yellow

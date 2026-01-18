@@ -45,8 +45,7 @@ if (Test-Path $runnerZip) {
 
 # Extract runner
 Write-Host "Extracting runner..." -ForegroundColor Yellow
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-[System.IO.Compression.ZipFile]::ExtractToDirectory($runnerZip, $InstallPath, $true)
+Expand-Archive -Path $runnerZip -DestinationPath $InstallPath -Force
 Write-Host "Extracted successfully" -ForegroundColor Green
 Write-Host ""
 
