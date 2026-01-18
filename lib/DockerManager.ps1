@@ -424,30 +424,36 @@ function Update-DockerRunner {
     }
     
     Write-Host ""
-    Write-Host "[1/4] Finding and stopping old runner containers..." -ForegroundColor Cyan
+    Write-Host "[1/4] Finding and stopping old containers using image..." -ForegroundColor Cyan
     
-    # Find all avyx-runner containers
-    $runners = Get-DockerRunners -All | Where-Object { $_.Name -like "*runner*" -and $_.Image -eq $ImageTag }
+    # Find ALL containers using this image (not just runners)
+    $allContainers = docker ps -a --filter "ancestor=$ImageTag" --format "{{.ID}}|{{.Names}}" 2>&1
     
-    if ($runners.Count -gt 0) {
-        foreach ($runner in $runners) {
-            Write-Host "  Stopping: $($runner.Name)" -ForegroundColor Gray
-            docker stop $runner.Name 2>&1 | Out-Null
-            Write-Host "  Removing: $($runner.Name)" -ForegroundColor Gray
-            docker rm $runner.Name 2>&1 | Out-Null
+    if ($allContainers -and $allContainers.Count -gt 0) {
+        $stoppedCount = 0
+        foreach ($line in $allContainers) {
+            if ($line -match '^([^|]+)\|(.+)$') {
+                $containerId = $matches[1]
+                $containerName = $matches[2]
+                Write-Host "  Stopping: $containerName ($containerId)" -ForegroundColor Gray
+                docker stop $containerId 2>&1 | Out-Null
+                Write-Host "  Removing: $containerName" -ForegroundColor Gray
+                docker rm $containerId 2>&1 | Out-Null
+                $stoppedCount++
+            }
         }
-        Write-Host "  Cleaned up $($runners.Count) container(s)" -ForegroundColor Green
+        Write-Host "  Cleaned up $stoppedCount container(s)" -ForegroundColor Green
     } else {
-        Write-Host "  No old containers found" -ForegroundColor Gray
+        Write-Host "  No containers using this image" -ForegroundColor Gray
     }
     
     Write-Host ""
     Write-Host "[2/4] Removing old Docker image..." -ForegroundColor Cyan
-    docker rmi $ImageTag 2>&1 | Out-Null
+    docker rmi -f $ImageTag 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) {
         Write-Host "  Old image removed" -ForegroundColor Green
     } else {
-        Write-Host "  No old image found (this is OK)" -ForegroundColor Gray
+        Write-Host "  Image removal skipped or already removed" -ForegroundColor Gray
     }
     
     Write-Host ""
