@@ -8,8 +8,43 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Simple localization stub (returns key as-is for now)
+function L {
+    param([string]$key, [string]$param1 = "", [string]$param2 = "")
+    # Return English text based on key
+    $translations = @{
+        "menu_title" = "Runner Manager"
+        "menu_subtitle" = "Advanced Infrastructure Suite"
+        "menu_platform" = "Platform"
+        "menu_instance" = "Instance"
+        "menu_repository" = "Repository"
+        "menu_group" = "Group"
+        "menu_project" = "Project"
+        "menu_target" = "Target"
+        "menu_not_configured" = "Not configured"
+        "menu_token" = "Token"
+        "menu_configured" = "Configured"
+        "menu_not_set" = "Not set"
+        "menu_telegram" = "Telegram"
+        "menu_enabled" = "Enabled"
+        "menu_disabled" = "Disabled"
+        "menu_users" = "users"
+        "menu_docker_runners" = "Docker Runners"
+        "menu_containers" = "containers"
+        "invalid_option" = "Invalid option. Please try again."
+        "press_enter" = "Press Enter to continue"
+        "goodbye" = "Thank you for using Octopus Runner Manager!"
+        "cancelled" = "Cancelled"
+        "error" = "Error"
+    }
+    
+    if ($translations.ContainsKey($key)) {
+        return $translations[$key] -f $param1, $param2
+    }
+    return $key
+}
+
 # Import modules in correct order (dependencies first)
-. "$PSScriptRoot\lib\Localization.ps1"
 . "$PSScriptRoot\lib\PlatformProvider.ps1"
 . "$PSScriptRoot\lib\GitHubProvider.ps1"
 . "$PSScriptRoot\lib\GitLabProvider.ps1"
@@ -31,9 +66,6 @@ $ErrorActionPreference = "Stop"
 $configPath = "$PSScriptRoot\.runner-config.json"
 $config = [RunnerConfig]::new($configPath)
 $config.Load()
-
-# Initialize localization with saved language
-Initialize-Localization -Language $config.Language
 
 # Main menu loop
 do {
@@ -184,19 +216,24 @@ do {
         "16" {
             Invoke-DockerManagement -Config $config
         }
+        "17" {
+            Show-HelpGuide
+        }
         "0" { 
             break 
         }
         default { 
-            Write-Host (L "invalid_option") -ForegroundColor Red 
+            Write-Host "Invalid option. Please try again." -ForegroundColor Red 
         }
     }
     
     if ($choice -ne "0") {
         Write-Host ""
-        Read-Host (L "press_enter")
+        Read-Host "Press Enter to continue"
     }
 } while ($choice -ne "0")
 
 Write-Host ""
-Write-Host (L "goodbye") -ForegroundColor Cyan
+Write-Host "Thank you for using Octopus Runner Manager!" -ForegroundColor Cyan
+Write-Host "Powered by ibuildrun" -ForegroundColor Magenta
+Write-Host ""
