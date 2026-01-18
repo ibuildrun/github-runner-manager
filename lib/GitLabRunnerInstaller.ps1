@@ -139,14 +139,14 @@ function Install-GitLabRunner {
         
         if ($process.ExitCode -eq 0) {
             Write-Host ""
-            Write-Host "✅ Runner registered successfully!" -ForegroundColor Green
+            Write-Host "Runner registered successfully!" -ForegroundColor Green
             Write-Host "Runner name: $runnerName" -ForegroundColor Cyan
             Write-Host "Executor: $executor" -ForegroundColor Cyan
             Write-Host "Tags: $($tags -join ', ')" -ForegroundColor Cyan
             Write-Host ""
             Write-Host "You can now start the runner (option 6)" -ForegroundColor Yellow
         } else {
-            Write-Host "❌ Runner registration failed" -ForegroundColor Red
+            Write-Host "Runner registration failed" -ForegroundColor Red
             $errorLog = Get-Content "$RunnerPath\register-error.log" -Raw -ErrorAction SilentlyContinue
             if ($errorLog) {
                 Write-Host "Error details:" -ForegroundColor Yellow

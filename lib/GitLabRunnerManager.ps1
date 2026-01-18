@@ -34,9 +34,9 @@ function Start-GitLabRunner {
         
         $process = Get-Process -Name "gitlab-runner" -ErrorAction SilentlyContinue
         if ($process) {
-            Write-Host "✅ Runner started successfully (PID: $($process.Id))" -ForegroundColor Green
+            Write-Host "Runner started successfully (PID: $($process.Id))" -ForegroundColor Green
         } else {
-            Write-Host "❌ Runner failed to start" -ForegroundColor Red
+            Write-Host "Runner failed to start" -ForegroundColor Red
         }
     } catch {
         Write-Host "Error starting runner: $_" -ForegroundColor Red
@@ -60,9 +60,9 @@ function Stop-GitLabRunner {
         
         $process = Get-Process -Name "gitlab-runner" -ErrorAction SilentlyContinue
         if (-not $process) {
-            Write-Host "✅ Runner stopped successfully" -ForegroundColor Green
+            Write-Host "Runner stopped successfully" -ForegroundColor Green
         } else {
-            Write-Host "❌ Runner failed to stop" -ForegroundColor Red
+            Write-Host "Runner failed to stop" -ForegroundColor Red
         }
     } catch {
         Write-Host "Error stopping runner: $_" -ForegroundColor Red
