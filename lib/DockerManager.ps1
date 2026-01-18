@@ -135,7 +135,8 @@ trap cleanup EXIT
         # For entrypoint.sh, convert to Unix line endings (LF only) and write as bytes
         $entrypointUnix = $entrypoint -replace "`r`n", "`n"
         $entrypointBytes = [System.Text.Encoding]::UTF8.GetBytes($entrypointUnix)
-        [System.IO.File]::WriteAllBytes("$tempDir\entrypoint.sh", $entrypointBytes)
+        $entrypointPath = Join-Path $tempDir "entrypoint.sh"
+        [System.IO.File]::WriteAllBytes($entrypointPath, $entrypointBytes)
         
         # Build image
         Write-Host "Building Docker image..." -ForegroundColor Cyan
