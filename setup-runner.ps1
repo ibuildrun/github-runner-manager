@@ -94,7 +94,8 @@ switch ($Action) {
         
         # Install service
         Write-Host "Installing Windows Service..." -ForegroundColor Yellow
-        & ".\svc.cmd" install
+        Set-Location $InstallPath
+        & "$InstallPath\svc.cmd" install
         
         if ($LASTEXITCODE -ne 0) {
             Write-Host "Error: Service installation failed" -ForegroundColor Red
@@ -103,7 +104,7 @@ switch ($Action) {
         
         # Start service
         Write-Host "Starting service..." -ForegroundColor Yellow
-        & ".\svc.cmd" start
+        & "$InstallPath\svc.cmd" start
         
         Write-Host ""
         Write-Host "========================================" -ForegroundColor Green
