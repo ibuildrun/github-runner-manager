@@ -1,0 +1,5 @@
+﻿# Localization Module - Russian strings
+$russianStrings = @{
+    menu_title = "Менеджер Runner v3.0"
+    menu_subtitle = "Расширенный инфраструктурный комплекс"
+}

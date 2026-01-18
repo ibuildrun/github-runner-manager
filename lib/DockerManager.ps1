@@ -1,0 +1,442 @@
+# Docker Container Management Module
+# Manages self-hosted runners in Docker containers
+
+class DockerRunnerConfig {
+    [string]$ContainerId
+    [string]$Repository
+    [string]$RunnerName
+    [string]$ImageTag
+    [datetime]$Created
+    [string]$Status
+    
+    DockerRunnerConfig() {
+        $this.Created = Get-Date
+        $this.Status = "Unknown"
+    }
+}
+
+function Test-DockerInstalled {
+    try {
+        $null = docker --version 2>&1
+        return $true
+    } catch {
+        Write-Host "Docker is not installed or not in PATH" -ForegroundColor Red
+        Write-Host "Install Docker Desktop: https://www.docker.com/products/docker-desktop" -ForegroundColor Yellow
+        return $false
+    }
+}
+
+function Test-DockerRunning {
+    try {
+        $null = docker ps 2>&1
+        return $true
+    } catch {
+        Write-Host "Docker daemon is not running" -ForegroundColor Red
+        Write-Host "Start Docker Desktop and try again" -ForegroundColor Yellow
+        return $false
+    }
+}
+
+function New-DockerRunnerImage {
+    param(
+        [Parameter(Mandatory=$false)]
+        [string]$ImageTag = "github-runner:latest"
+    )
+    
+    Write-Host "Creating Docker image for GitHub runner..." -ForegroundColor Cyan
+    
+    $dockerfile = @"
+FROM ubuntu:22.04
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    jq \
+    libicu-dev \
+    sudo \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create runner user
+RUN useradd -m -s /bin/bash runner && \
+    usermod -aG sudo runner && \
+    echo "runner ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Set working directory
+WORKDIR /home/runner
+
+# Download and extract GitHub Actions runner
+ARG RUNNER_VERSION="2.311.0"
+RUN curl -o actions-runner-linux-x64.tar.gz -L \
+    https://github.com/actions/runner/releases/download/v`${RUNNER_VERSION}/actions-runner-linux-x64-`${RUNNER_VERSION}.tar.gz && \
+    tar xzf actions-runner-linux-x64.tar.gz && \
+    rm actions-runner-linux-x64.tar.gz && \
+    chown -R runner:runner /home/runner
+
+USER runner
+
+# Entry point script
+COPY entrypoint.sh /home/runner/entrypoint.sh
+RUN sudo chmod +x /home/runner/entrypoint.sh
+
+ENTRYPOINT ["/home/runner/entrypoint.sh"]
+"@
+
+    $entrypoint = @"
+#!/bin/bash
+set -e
+
+if [ -z "`$GITHUB_TOKEN" ] || [ -z "`$GITHUB_REPOSITORY" ]; then
+    echo "Error: GITHUB_TOKEN and GITHUB_REPOSITORY must be set"
+    exit 1
+fi
+
+# Get registration token
+REGISTRATION_TOKEN=`$(curl -s -X POST \
+    -H "Authorization: token `$GITHUB_TOKEN" \
+    -H "Accept: application/vnd.github.v3+json" \
+    "https://api.github.com/repos/`$GITHUB_REPOSITORY/actions/runners/registration-token" \
+    | jq -r .token)
+
+if [ -z "`$REGISTRATION_TOKEN" ] || [ "`$REGISTRATION_TOKEN" = "null" ]; then
+    echo "Error: Failed to get registration token"
+    exit 1
+fi
+
+# Configure runner
+./config.sh --url "https://github.com/`$GITHUB_REPOSITORY" \
+    --token "`$REGISTRATION_TOKEN" \
+    --name "`${RUNNER_NAME:-docker-runner-`$(hostname)}" \
+    --work _work \
+    --labels docker,self-hosted \
+    --unattended \
+    --replace
+
+# Cleanup function
+cleanup() {
+    echo "Removing runner..."
+    ./config.sh remove --token "`$REGISTRATION_TOKEN"
+}
+
+trap cleanup EXIT
+
+# Start runner
+./run.sh
+"@
+
+    # Create temporary directory for build context
+    $tempDir = Join-Path $env:TEMP "github-runner-docker-$(Get-Date -Format 'yyyyMMddHHmmss')"
+    New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+    
+    try {
+        # Write files
+        $dockerfile | Set-Content -Path "$tempDir\Dockerfile" -Encoding UTF8
+        $entrypoint | Set-Content -Path "$tempDir\entrypoint.sh" -Encoding UTF8
+        
+        # Build image
+        Write-Host "Building Docker image..." -ForegroundColor Cyan
+        docker build -t $ImageTag $tempDir
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "$([char]0x2713) Docker image created successfully: $ImageTag" -ForegroundColor Green
+            return $true
+        } else {
+            Write-Host "$([char]0x2717) Failed to build Docker image" -ForegroundColor Red
+            return $false
+        }
+    } finally {
+        # Cleanup
+        Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Start-DockerRunner {
+    param(
+        [Parameter(Mandatory=$true)]
+        [RunnerConfig]$Config,
+        
+        [Parameter(Mandatory=$false)]
+        [string]$RunnerName,
+        
+        [Parameter(Mandatory=$false)]
+        [string]$ImageTag = "github-runner:latest",
+        
+        [Parameter(Mandatory=$false)]
+        [hashtable]$AdditionalEnvVars = @{}
+    )
+    
+    if (-not (Test-DockerInstalled)) { return $null }
+    if (-not (Test-DockerRunning)) { return $null }
+    
+    if (-not $Config.IsValid()) {
+        Write-Host "Configuration is not valid. Please configure token and repository first." -ForegroundColor Red
+        return $null
+    }
+    
+    # Check if image exists
+    $imageExists = docker images -q $ImageTag 2>$null
+    if (-not $imageExists) {
+        Write-Host "Image $ImageTag not found. Creating..." -ForegroundColor Yellow
+        if (-not (New-DockerRunnerImage -ImageTag $ImageTag)) {
+            return $null
+        }
+    }
+    
+    if (-not $RunnerName) {
+        $RunnerName = "docker-runner-$(Get-Date -Format 'yyyyMMddHHmmss')"
+    }
+    
+    Write-Host "Starting Docker runner container..." -ForegroundColor Cyan
+    Write-Host "Repository: $($Config.Repository)" -ForegroundColor Gray
+    Write-Host "Runner name: $RunnerName" -ForegroundColor Gray
+    
+    # Build environment variables
+    $envArgs = @(
+        "-e", "GITHUB_TOKEN=$($Config.GitHubToken)",
+        "-e", "GITHUB_REPOSITORY=$($Config.Repository)",
+        "-e", "RUNNER_NAME=$RunnerName"
+    )
+    
+    foreach ($key in $AdditionalEnvVars.Keys) {
+        $envArgs += "-e"
+        $envArgs += "$key=$($AdditionalEnvVars[$key])"
+    }
+    
+    # Start container
+    $containerId = docker run -d --name $RunnerName @envArgs $ImageTag
+    
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "$([char]0x2713) Container started: $containerId" -ForegroundColor Green
+        
+        # Save container info
+        $dockerRunner = [DockerRunnerConfig]::new()
+        $dockerRunner.ContainerId = $containerId
+        $dockerRunner.Repository = $Config.Repository
+        $dockerRunner.RunnerName = $RunnerName
+        $dockerRunner.ImageTag = $ImageTag
+        $dockerRunner.Status = "Running"
+        
+        $Config.AddDockerRunner($dockerRunner)
+        
+        return $dockerRunner
+    } else {
+        Write-Host "$([char]0x2717) Failed to start container" -ForegroundColor Red
+        return $null
+    }
+}
+
+function Stop-DockerRunner {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$ContainerIdOrName
+    )
+    
+    if (-not (Test-DockerInstalled)) { return $false }
+    if (-not (Test-DockerRunning)) { return $false }
+    
+    Write-Host "Stopping container $ContainerIdOrName..." -ForegroundColor Cyan
+    
+    docker stop $ContainerIdOrName 2>&1 | Out-Null
+    
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "$([char]0x2713) Container stopped" -ForegroundColor Green
+        return $true
+    } else {
+        Write-Host "$([char]0x2717) Failed to stop container" -ForegroundColor Red
+        return $false
+    }
+}
+
+function Remove-DockerRunner {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$ContainerIdOrName,
+        
+        [Parameter(Mandatory=$false)]
+        [switch]$Force
+    )
+    
+    if (-not (Test-DockerInstalled)) { return $false }
+    if (-not (Test-DockerRunning)) { return $false }
+    
+    Write-Host "Removing container $ContainerIdOrName..." -ForegroundColor Cyan
+    
+    $args = @("rm")
+    if ($Force) { $args += "-f" }
+    $args += $ContainerIdOrName
+    
+    docker @args 2>&1 | Out-Null
+    
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "$([char]0x2713) Container removed" -ForegroundColor Green
+        return $true
+    } else {
+        Write-Host "$([char]0x2717) Failed to remove container" -ForegroundColor Red
+        return $false
+    }
+}
+
+function Get-DockerRunners {
+    param(
+        [Parameter(Mandatory=$false)]
+        [switch]$All
+    )
+    
+    if (-not (Test-DockerInstalled)) { return @() }
+    if (-not (Test-DockerRunning)) { return @() }
+    
+    $args = @("ps", "--format", "{{.ID}}|{{.Names}}|{{.Status}}|{{.Image}}")
+    if ($All) { $args += "-a" }
+    
+    $containers = docker @args 2>&1
+    
+    $runners = @()
+    foreach ($line in $containers) {
+        if ($line -match '^([^|]+)\|([^|]+)\|([^|]+)\|([^|]+)$') {
+            $runners += [PSCustomObject]@{
+                ContainerId = $matches[1]
+                Name = $matches[2]
+                Status = $matches[3]
+                Image = $matches[4]
+            }
+        }
+    }
+    
+    return $runners
+}
+
+function Show-DockerRunnerLogs {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$ContainerIdOrName,
+        
+        [Parameter(Mandatory=$false)]
+        [int]$Lines = 50
+    )
+    
+    if (-not (Test-DockerInstalled)) { return }
+    if (-not (Test-DockerRunning)) { return }
+    
+    Write-Host ""
+    Write-Host "=== Container Logs: $ContainerIdOrName ===" -ForegroundColor Cyan
+    Write-Host ""
+    
+    docker logs --tail $Lines $ContainerIdOrName
+}
+
+function Invoke-DockerManagement {
+    param(
+        [Parameter(Mandatory=$true)]
+        [RunnerConfig]$Config
+    )
+    
+    do {
+        Write-Host ""
+        Write-Host "=== Docker Container Management ===" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "1. Build runner image"
+        Write-Host "2. Start new runner container"
+        Write-Host "3. List running containers"
+        Write-Host "4. Stop container"
+        Write-Host "5. Remove container"
+        Write-Host "6. View container logs"
+        Write-Host "7. Bulk deploy (multiple containers)"
+        Write-Host "0. Back"
+        Write-Host ""
+        
+        $choice = Read-Host "Select option"
+        
+        switch ($choice) {
+            "1" {
+                $imageTag = Read-Host "Enter image tag (default: github-runner:latest)"
+                if ([string]::IsNullOrEmpty($imageTag)) {
+                    $imageTag = "github-runner:latest"
+                }
+                New-DockerRunnerImage -ImageTag $imageTag
+            }
+            "2" {
+                $runnerName = Read-Host "Enter runner name (leave empty for auto-generated)"
+                $imageTag = Read-Host "Enter image tag (default: github-runner:latest)"
+                if ([string]::IsNullOrEmpty($imageTag)) {
+                    $imageTag = "github-runner:latest"
+                }
+                
+                $runner = Start-DockerRunner -Config $Config -RunnerName $runnerName -ImageTag $imageTag
+                
+                if ($runner) {
+                    # Send Telegram notification
+                    $telegramConfig = $Config.GetTelegramConfig()
+                    if ($telegramConfig.Enabled) {
+                        $message = "Docker Runner Started`n`nRepository: $($Config.Repository)`nRunner: $($runner.RunnerName)`nContainer: $($runner.ContainerId.Substring(0,12))"
+                        Send-TelegramNotification -TelegramConfig (ConvertTo-TelegramConfigObject $telegramConfig) -Message $message -Type "Success"
+                    }
+                }
+            }
+            "3" {
+                $runners = Get-DockerRunners -All
+                Write-Host ""
+                Write-Host "=== Docker Runners ===" -ForegroundColor Cyan
+                Write-Host ""
+                
+                if ($runners.Count -eq 0) {
+                    Write-Host "No containers found" -ForegroundColor Yellow
+                } else {
+                    $runners | Format-Table -Property ContainerId, Name, Status, Image -AutoSize
+                }
+            }
+            "4" {
+                $containerName = Read-Host "Enter container ID or name"
+                Stop-DockerRunner -ContainerIdOrName $containerName
+            }
+            "5" {
+                $containerName = Read-Host "Enter container ID or name"
+                $force = Read-Host "Force remove? (y/n)"
+                
+                if ($force -eq 'y') {
+                    Remove-DockerRunner -ContainerIdOrName $containerName -Force
+                } else {
+                    Remove-DockerRunner -ContainerIdOrName $containerName
+                }
+            }
+            "6" {
+                $containerName = Read-Host "Enter container ID or name"
+                $lines = Read-Host "Number of lines (default: 50)"
+                if ([string]::IsNullOrEmpty($lines)) { $lines = 50 }
+                
+                Show-DockerRunnerLogs -ContainerIdOrName $containerName -Lines $lines
+            }
+            "7" {
+                $count = [int](Read-Host "How many containers to deploy?")
+                $imageTag = Read-Host "Enter image tag (default: github-runner:latest)"
+                if ([string]::IsNullOrEmpty($imageTag)) {
+                    $imageTag = "github-runner:latest"
+                }
+                
+                Write-Host ""
+                Write-Host "Deploying $count containers..." -ForegroundColor Cyan
+                
+                for ($i = 1; $i -le $count; $i++) {
+                    $runnerName = "docker-runner-bulk-$i-$(Get-Date -Format 'yyyyMMddHHmmss')"
+                    Write-Host "[$i/$count] Starting $runnerName..." -ForegroundColor Gray
+                    Start-DockerRunner -Config $Config -RunnerName $runnerName -ImageTag $imageTag | Out-Null
+                    Start-Sleep -Seconds 2
+                }
+                
+                Write-Host ""
+                Write-Host "$([char]0x2713) Bulk deployment completed!" -ForegroundColor Green
+                
+                # Send Telegram notification
+                $telegramConfig = $Config.GetTelegramConfig()
+                if ($telegramConfig.Enabled) {
+                    $message = "Bulk Deployment Completed`n`nRepository: $($Config.Repository)`nContainers deployed: $count"
+                    Send-TelegramNotification -TelegramConfig (ConvertTo-TelegramConfigObject $telegramConfig) -Message $message -Type "Success"
+                }
+            }
+        }
+        
+        if ($choice -ne "0") {
+            Write-Host ""
+            Read-Host "Press Enter to continue"
+        }
+    } while ($choice -ne "0")
+}

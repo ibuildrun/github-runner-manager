@@ -1,0 +1,20 @@
+# Runner configuration (contains sensitive data)
+.runner-config.json
+
+# Git credentials (should not be here)
+*.git-credentials
+
+# Runner installation directory (if placed here)
+actions-runner/
+
+# PowerShell module cache
+*.psm1.cache
+
+# Windows thumbnail cache
+Thumbs.db
+
+# macOS
+.DS_Store
+
+# Kiro directory (private subrepository)
+.kiro/
