@@ -6,33 +6,33 @@
 function Test-SSHConnection {
     param(
         [Parameter(Mandatory=$true)]
-        [string]$Host,
+        [string]$HostName,
         [Parameter(Mandatory=$true)]
         [string]$Port,
         [Parameter(Mandatory=$true)]
-        [string]$User,
+        [string]$UserName,
         [Parameter(Mandatory=$true)]
         [string]$Password
     )
     
     Write-Host ""
-    Write-Host "Testing SSH connection to ${User}@${Host}:${Port}..." -ForegroundColor Yellow
+    Write-Host "Testing SSH connection to ${UserName}@${HostName}:${Port}..." -ForegroundColor Yellow
     
     try {
         # Create temporary script for SSH test
         $testScript = @"
 `$password = ConvertTo-SecureString '$Password' -AsPlainText -Force
-`$credential = New-Object System.Management.Automation.PSCredential ('$User', `$password)
+`$credential = New-Object System.Management.Automation.PSCredential ('$UserName', `$password)
 
 try {
-    `$session = New-PSSession -HostName $Host -Port $Port -UserName $User -SSHTransport -ErrorAction Stop
+    `$session = New-PSSession -HostName $HostName -Port $Port -UserName $UserName -SSHTransport -ErrorAction Stop
     if (`$session) {
         Remove-PSSession `$session
         exit 0
     }
 } catch {
     # Try using plink if available
-    `$plinkTest = echo y | plink -P $Port $User@$Host -pw '$Password' 'echo test' 2>&1
+    `$plinkTest = echo y | plink -P $Port $UserName@$HostName -pw '$Password' 'echo test' 2>&1
     if (`$LASTEXITCODE -eq 0) {
         exit 0
     }
@@ -69,11 +69,11 @@ exit 1
 function Setup-SSHKeys {
     param(
         [Parameter(Mandatory=$true)]
-        [string]$Host,
+        [string]$HostName,
         [Parameter(Mandatory=$true)]
         [string]$Port,
         [Parameter(Mandatory=$true)]
-        [string]$User,
+        [string]$UserName,
         [Parameter(Mandatory=$true)]
         [string]$Password,
         [Parameter(Mandatory=$true)]
@@ -125,7 +125,7 @@ $publicKey
 `$command = "mkdir -p ~/.ssh && chmod 700 ~/.ssh && echo '`$publicKey' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
 
 try {
-    echo y | plink -P $Port $User@$Host -pw '$Password' `$command 2>&1 | Out-Null
+    echo y | plink -P $Port $UserName@$HostName -pw '$Password' `$command 2>&1 | Out-Null
     if (`$LASTEXITCODE -eq 0) {
         exit 0
     }
@@ -423,7 +423,7 @@ function Invoke-SecretsConfiguration {
         $testConnection = Read-Host "Test SSH connection now? (y/N)"
         
         if ($testConnection -eq "y" -or $testConnection -eq "Y") {
-            if (Test-SSHConnection -Host $sshHost -Port $sshPort -User $sshUser -Password $sshPassword) {
+            if (Test-SSHConnection -HostName $sshHost -Port $sshPort -UserName $sshUser -Password $sshPassword) {
                 Write-Host ""
                 Write-Host "=== SSH Key Setup ===" -ForegroundColor Cyan
                 Write-Host "Would you like to set up passwordless SSH access using SSH keys?" -ForegroundColor Yellow
@@ -435,7 +435,7 @@ function Invoke-SecretsConfiguration {
                 
                 $setupKeys = Read-Host "Setup SSH keys? (y/N)"
                 if ($setupKeys -eq "y" -or $setupKeys -eq "Y") {
-                    Setup-SSHKeys -Host $sshHost -Port $sshPort -User $sshUser -Password $sshPassword -Repository $Config.Repository
+                    Setup-SSHKeys -HostName $sshHost -Port $sshPort -UserName $sshUser -Password $sshPassword -Repository $Config.Repository
                 }
             }
         }
