@@ -1,4 +1,4 @@
-# GitHub Runner Infrastructure Manager 🚀
+# GitHub Runner Infrastructure Manager
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1+-blue.svg)](https://github.com/PowerShell/PowerShell)
@@ -6,45 +6,45 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
 [![Telegram](https://img.shields.io/badge/Telegram-Bot-26A5E4.svg)](https://telegram.org/)
 
-Комплексное решение для управления GitHub Actions self-hosted runners с поддержкой Docker контейнеров и Telegram уведомлений. Полноценный инфраструктурный комбайн для CI/CD.
+Comprehensive solution for managing GitHub Actions self-hosted runners with Docker container support and Telegram notifications. Full-featured infrastructure suite for CI/CD.
 
-> **🔒 SECURITY NOTICE:** Version 3.0.2+ removes all hardcoded credentials. If you're using an older version, please update immediately and rotate any exposed credentials.
+> **SECURITY NOTICE:** Version 3.0.2+ removes all hardcoded credentials. If you're using an older version, please update immediately and rotate any exposed credentials.
 
-## 🎯 Возможности
+## Features
 
-### Базовые функции
-- **Поиск репозиториев** - Поиск и выбор через GitHub API
-- **Гибкое хранение токенов** - Environment variable, config file или session only
-- **Интерактивное меню** - Удобный интерфейс с категориями
-- **Авто-запуск** - Запуск runner при старте Windows
-- **Мониторинг статуса** - Информация о состоянии в реальном времени
-- **Просмотр логов** - Просмотр логов прямо из меню
+### Core Functions
+- **Repository Search** - Search and select via GitHub API
+- **Flexible Token Storage** - Environment variable, config file or session only
+- **Interactive Menu** - User-friendly interface with categories
+- **Auto-Start** - Launch runner on Windows startup
+- **Status Monitoring** - Real-time status information
+- **Log Viewing** - View logs directly from menu
 
-### 🐳 Docker контейнеры
-- **Создание образов** - Автоматическая сборка Docker образов для runners
-- **Управление контейнерами** - Запуск, остановка, удаление контейнеров
-- **Массовое развертывание** - Запуск множества runners одной командой
-- **Изоляция** - Каждый runner в отдельном контейнере
-- **Масштабирование** - Легкое добавление новых runners
+### Docker Containers
+- **Image Building** - Automatic Docker image creation for runners
+- **Container Management** - Start, stop, remove containers
+- **Bulk Deployment** - Launch multiple runners with one command
+- **Isolation** - Each runner in separate container
+- **Scaling** - Easy addition of new runners
 
-### 📱 Telegram уведомления
-- **Множественные пользователи** - Уведомления для нескольких человек
-- **Типы уведомлений** - Info, Success, Warning, Error
-- **События** - Старт/стоп runners, развертывание контейнеров
-- **Тестирование** - Проверка подключения к боту
-- **Управление пользователями** - Добавление/удаление chat ID
+### Telegram Notifications
+- **Multiple Users** - Notifications for multiple people
+- **Notification Types** - Info, Success, Warning, Error
+- **Events** - Runner start/stop, container deployment
+- **Connection Testing** - Verify bot connectivity
+- **User Management** - Add/remove chat IDs
 
-## 🚀 Быстрый старт
+## Quick Start
 
-### Требования
+### Requirements
 
 - Windows 10/11
 - PowerShell 5.1+
 - GitHub Personal Access Token (`repo`, `workflow`)
-- Docker Desktop (опционально, для контейнеров)
-- Telegram Bot Token (опционально, для уведомлений)
+- Docker Desktop (optional, for containers)
+- Telegram Bot Token (optional, for notifications)
 
-### Установка
+### Installation
 
 ```powershell
 git clone https://github.com/yourusername/github-runner-infrastructure.git
@@ -52,95 +52,95 @@ cd github-runner-infrastructure
 .\runner.ps1
 ```
 
-### Базовая настройка
+### Basic Setup
 
-1. **Настроить GitHub Token** (Опция 1)
-   - Создать токен: https://github.com/settings/tokens/new
-   - Права: `repo`, `workflow`
-   - Выбрать способ хранения
+1. **Configure GitHub Token** (Option 1)
+   - Create token: https://github.com/settings/tokens/new
+   - Scopes: `repo`, `workflow`
+   - Choose storage method
 
-2. **Выбрать репозиторий** (Опция 2)
-   - Поиск по вашим репозиториям
-   - Выбор репозитория для runner
+2. **Select Repository** (Option 2)
+   - Search your repositories
+   - Select repository for runner
 
-3. **Установить Runner** (Опция 5)
-   - Скачивание и настройка
-   - Регистрация в репозитории
+3. **Install Runner** (Option 5)
+   - Download and configure
+   - Register with repository
 
-4. **Запустить Runner** (Опция 6)
-   - Запуск в фоновом режиме
+4. **Start Runner** (Option 6)
+   - Launch in background
 
-## 📱 Настройка Telegram
+## Telegram Setup
 
-### Создание бота
+### Creating Bot
 
-1. Найти @BotFather в Telegram
-2. Отправить `/newbot`
-3. Следовать инструкциям
-4. Сохранить Bot Token
+1. Find @BotFather in Telegram
+2. Send `/newbot`
+3. Follow instructions
+4. Save Bot Token
 
-### Получение Chat ID
+### Getting Chat ID
 
-1. Написать сообщение вашему боту
-2. Открыть: `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates`
-3. Найти `"chat":{"id":123456789}`
-4. Использовать это число как Chat ID
+1. Send message to your bot
+2. Open: `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates`
+3. Find `"chat":{"id":123456789}`
+4. Use this number as Chat ID
 
-### Настройка в скрипте
+### Script Configuration
 
-1. Выбрать **Опция 14** в меню
-2. Ввести Bot Token
-3. Добавить Chat ID пользователей
-4. Протестировать уведомления
+1. Select **Option 14** in menu
+2. Enter Bot Token
+3. Add user Chat IDs
+4. Test notifications
 
-## 🐳 Работа с Docker
+## Working with Docker
 
-### Установка Docker
+### Installing Docker
 
-1. Скачать Docker Desktop: https://www.docker.com/products/docker-desktop
-2. Установить и запустить
-3. Убедиться что Docker работает: `docker --version`
+1. Download Docker Desktop: https://www.docker.com/products/docker-desktop
+2. Install and launch
+3. Verify Docker is running: `docker --version`
 
-### Создание runner образа
+### Creating Runner Image
 
 ```powershell
-# В меню выбрать: 15 -> 1
-# Или напрямую:
+# In menu select: 15 -> 1
+# Or directly:
 New-DockerRunnerImage -ImageTag "github-runner:latest"
 ```
 
-### Запуск контейнера
+### Starting Container
 
 ```powershell
-# В меню: 15 -> 2
-# Указать имя runner или оставить пустым для авто-генерации
+# In menu: 15 -> 2
+# Specify runner name or leave empty for auto-generation
 ```
 
-### Массовое развертывание
+### Bulk Deployment
 
 ```powershell
-# В меню: 15 -> 7
-# Указать количество контейнеров (например, 5)
-# Все контейнеры будут запущены автоматически
+# In menu: 15 -> 7
+# Specify number of containers (e.g., 5)
+# All containers will be launched automatically
 ```
 
-### Управление контейнерами
+### Container Management
 
 ```powershell
-# Список контейнеров
+# List containers
 docker ps -a
 
-# Остановка
+# Stop
 docker stop <container_name>
 
-# Удаление
+# Remove
 docker rm <container_name>
 
-# Логи
+# Logs
 docker logs <container_name>
 ```
 
-## 📋 Структура меню
+## Menu Structure
 
 ### Configuration
 - **1** - Configure GitHub Token
@@ -163,36 +163,36 @@ docker logs <container_name>
 - **12** - Uninstall Runner
 - **13** - Clear Configuration
 
-### Infrastructure Suite 🐳📱
+### Infrastructure Suite
 - **14** - Telegram Notifications
 - **15** - Docker Container Management
 
-## 🏗️ Архитектура
+## Architecture
 
 ```
 github-runner-infrastructure/
-├── runner.ps1                    # Главный скрипт
-├── lib/                          # Модули
-│   ├── Config.ps1                # Управление конфигурацией
+├── runner.ps1                    # Main script
+├── lib/                          # Modules
+│   ├── Config.ps1                # Configuration management
 │   ├── GitHub.ps1                # GitHub API
-│   ├── UI.ps1                    # Интерфейс
-│   ├── TokenManager.ps1          # Управление токенами
-│   ├── RepositorySelector.ps1    # Выбор репозитория
+│   ├── UI.ps1                    # Interface
+│   ├── TokenManager.ps1          # Token management
+│   ├── RepositorySelector.ps1    # Repository selection
 │   ├── SecretsManager.ps1        # GitHub secrets
-│   ├── RunnerInstaller.ps1       # Установка runner
-│   ├── RunnerManager.ps1         # Управление процессами
-│   ├── AutoStart.ps1             # Авто-запуск
-│   ├── TelegramNotifier.ps1      # Telegram интеграция
-│   └── DockerManager.ps1         # Docker управление
-├── .runner-config.json           # Конфигурация (auto-generated)
-├── README.md                     # Документация
-├── CHANGELOG.md                  # История версий
-└── LICENSE                       # MIT лицензия
+│   ├── RunnerInstaller.ps1       # Runner installation
+│   ├── RunnerManager.ps1         # Process management
+│   ├── AutoStart.ps1             # Auto-start
+│   ├── TelegramNotifier.ps1      # Telegram integration
+│   └── DockerManager.ps1         # Docker management
+├── .runner-config.json           # Configuration (auto-generated)
+├── README.md                     # Documentation
+├── CHANGELOG.md                  # Version history
+└── LICENSE                       # MIT license
 ```
 
-## 🔧 Конфигурация
+## Configuration
 
-### Формат .runner-config.json
+### .runner-config.json Format
 
 ```json
 {
@@ -218,106 +218,106 @@ github-runner-infrastructure/
 }
 ```
 
-## 🎯 Примеры использования
+## Usage Examples
 
-### Сценарий 1: Локальный runner
+### Scenario 1: Local Runner
 
 ```powershell
 .\runner.ps1
-# 1 -> Настроить токен
-# 2 -> Выбрать репозиторий
-# 5 -> Установить runner
-# 6 -> Запустить runner
-# 10 -> Включить авто-запуск
+# 1 -> Configure token
+# 2 -> Select repository
+# 5 -> Install runner
+# 6 -> Start runner
+# 10 -> Enable auto-start
 ```
 
-### Сценарий 2: Docker runners с уведомлениями
+### Scenario 2: Docker Runners with Notifications
 
 ```powershell
 .\runner.ps1
-# 1 -> Настроить токен
-# 2 -> Выбрать репозиторий
-# 14 -> Настроить Telegram
+# 1 -> Configure token
+# 2 -> Select repository
+# 14 -> Configure Telegram
 # 15 -> Docker Management
-#   1 -> Создать образ
-#   7 -> Массовое развертывание (5 контейнеров)
+#   1 -> Build image
+#   7 -> Bulk deployment (5 containers)
 ```
 
-### Сценарий 3: Мониторинг инфраструктуры
+### Scenario 3: Infrastructure Monitoring
 
 ```powershell
 .\runner.ps1
-# 8 -> Проверить статус
+# 8 -> Check status
 # 15 -> Docker Management
-#   3 -> Список контейнеров
-#   6 -> Просмотр логов
+#   3 -> List containers
+#   6 -> View logs
 ```
 
-## 🔐 Безопасность
+## Security
 
-- Никогда не коммитьте `.runner-config.json` (уже в .gitignore)
-- Environment variable безопаснее чем file storage
-- Base64 это НЕ шифрование - используйте environment variable
-- Регулярно обновляйте GitHub токены
-- Используйте минимальные необходимые права для токенов
-- Храните Telegram Bot Token в безопасности
+- Never commit `.runner-config.json` (already in .gitignore)
+- Environment variable is safer than file storage
+- Base64 is NOT encryption - use environment variable
+- Regularly update GitHub tokens
+- Use minimum required permissions for tokens
+- Keep Telegram Bot Token secure
 
-## 🐛 Решение проблем
+## Troubleshooting
 
-### Docker не запускается
+### Docker Won't Start
 
 ```powershell
-# Проверить установку
+# Check installation
 docker --version
 
-# Проверить что Docker Desktop запущен
+# Verify Docker Desktop is running
 docker ps
 ```
 
-### Telegram уведомления не приходят
+### Telegram Notifications Not Arriving
 
-1. Проверить Bot Token
-2. Убедиться что написали боту первое сообщение
-3. Проверить Chat ID через API
-4. Протестировать через опцию 14 -> 4
+1. Verify Bot Token
+2. Ensure you sent first message to bot
+3. Check Chat ID via API
+4. Test via option 14 -> 4
 
-### Runner показывает offline
+### Runner Shows Offline
 
-1. Проверить процесс: `Get-Process -Name "Runner.Listener"`
-2. Просмотреть логи: Опция 9
-3. Перезапустить: Опция 7 -> Опция 6
+1. Check process: `Get-Process -Name "Runner.Listener"`
+2. View logs: Option 9
+3. Restart: Option 7 -> Option 6
 
-## 📊 Производительность
+## Performance
 
-### Рекомендации для Docker
+### Docker Recommendations
 
-- Используйте SSD для Docker volumes
-- Минимум 2GB RAM на контейнер
-- Проводное подключение для стабильности
-- Мониторьте использование диска
+- Use SSD for Docker volumes
+- Minimum 2GB RAM per container
+- Wired connection for stability
+- Monitor disk usage
 
-### Масштабирование
+### Scaling
 
-- До 10 контейнеров на обычном ПК
-- До 50+ на серверном железе
-- Используйте Docker Swarm для кластеров
-- Настройте load balancing для больших нагрузок
+- Up to 10 containers on regular PC
+- Up to 50+ on server hardware
+- Use Docker Swarm for clusters
+- Configure load balancing for high loads
 
-## 🤝 Вклад в проект
+## Contributing
 
-Приветствуются Pull Requests!
+Pull Requests are welcome!
 
-1. Fork репозитория
-2. Создать feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit изменений (`git commit -m 'Add AmazingFeature'`)
-4. Push в branch (`git push origin feature/AmazingFeature`)
-5. Открыть Pull Request
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
 
-## 📝 Лицензия
+## License
 
-MIT License - см. [LICENSE](LICENSE)
+MIT License - see [LICENSE](LICENSE)
 
-## 🔗 Полезные ссылки
+## Useful Links
 
 - [GitHub Token](https://github.com/settings/tokens/new)
 - [GitHub Actions Docs](https://docs.github.com/en/actions/hosting-your-own-runners)
@@ -325,16 +325,16 @@ MIT License - см. [LICENSE](LICENSE)
 - [Telegram Bot API](https://core.telegram.org/bots/api)
 - [PowerShell Docs](https://docs.microsoft.com/en-us/powershell/)
 
-## 🌟 Особенности
+## Key Features
 
-- ✅ Полностью на PowerShell - нет зависимостей
-- ✅ Модульная архитектура - легко расширять
-- ✅ Docker интеграция - современная контейнеризация
-- ✅ Telegram боты - мгновенные уведомления
-- ✅ Множественные пользователи - командная работа
-- ✅ Массовое развертывание - быстрое масштабирование
-- ✅ Open Source - MIT лицензия
+- Fully PowerShell - no dependencies
+- Modular architecture - easy to extend
+- Docker integration - modern containerization
+- Telegram bots - instant notifications
+- Multiple users - team collaboration
+- Bulk deployment - fast scaling
+- Open Source - MIT license
 
 ---
 
-Made with ❤️ for DevOps community
+Made for DevOps community

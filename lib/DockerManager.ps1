@@ -395,6 +395,95 @@ function Show-DockerRunnerLogs {
     docker logs --tail $Lines $ContainerIdOrName
 }
 
+function Update-DockerRunner {
+    param(
+        [Parameter(Mandatory=$true)]
+        [RunnerConfig]$Config,
+        
+        [Parameter(Mandatory=$false)]
+        [string]$ImageTag = "github-runner:latest"
+    )
+    
+    if (-not (Test-DockerInstalled)) { return $false }
+    if (-not (Test-DockerRunning)) { return $false }
+    
+    Write-Host ""
+    Write-Host "=== Rebuild and Restart Runner ===" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "This will:" -ForegroundColor Yellow
+    Write-Host "  1. Stop and remove old runner containers" -ForegroundColor Gray
+    Write-Host "  2. Remove old Docker image" -ForegroundColor Gray
+    Write-Host "  3. Build new image with full stack (Node.js, PHP, Composer)" -ForegroundColor Gray
+    Write-Host "  4. Start new runner container" -ForegroundColor Gray
+    Write-Host ""
+    
+    $confirm = Read-Host "Continue? (y/N)"
+    if ($confirm -ne 'y') {
+        Write-Host "Cancelled" -ForegroundColor Yellow
+        return $false
+    }
+    
+    Write-Host ""
+    Write-Host "[1/4] Finding and stopping old runner containers..." -ForegroundColor Cyan
+    
+    # Find all avyx-runner containers
+    $runners = Get-DockerRunners -All | Where-Object { $_.Name -like "*runner*" -and $_.Image -eq $ImageTag }
+    
+    if ($runners.Count -gt 0) {
+        foreach ($runner in $runners) {
+            Write-Host "  Stopping: $($runner.Name)" -ForegroundColor Gray
+            docker stop $runner.Name 2>&1 | Out-Null
+            Write-Host "  Removing: $($runner.Name)" -ForegroundColor Gray
+            docker rm $runner.Name 2>&1 | Out-Null
+        }
+        Write-Host "  Cleaned up $($runners.Count) container(s)" -ForegroundColor Green
+    } else {
+        Write-Host "  No old containers found" -ForegroundColor Gray
+    }
+    
+    Write-Host ""
+    Write-Host "[2/4] Removing old Docker image..." -ForegroundColor Cyan
+    docker rmi $ImageTag 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  Old image removed" -ForegroundColor Green
+    } else {
+        Write-Host "  No old image found (this is OK)" -ForegroundColor Gray
+    }
+    
+    Write-Host ""
+    Write-Host "[3/4] Building new image with full stack..." -ForegroundColor Cyan
+    Write-Host "  This will take 5-10 minutes..." -ForegroundColor Yellow
+    Write-Host ""
+    
+    if (-not (New-DockerRunnerImage -ImageTag $ImageTag)) {
+        Write-Host ""
+        Write-Host "Failed to build image" -ForegroundColor Red
+        return $false
+    }
+    
+    Write-Host ""
+    Write-Host "[4/4] Starting new runner container..." -ForegroundColor Cyan
+    
+    $runner = Start-DockerRunner -Config $Config -ImageTag $ImageTag
+    
+    if ($runner) {
+        Write-Host ""
+        Write-Host "=== Update Complete ===" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "Runner: $($runner.RunnerName)" -ForegroundColor White
+        Write-Host "Container ID: $($runner.ContainerId.Substring(0,12))" -ForegroundColor Gray
+        Write-Host "Repository: $($Config.Repository)" -ForegroundColor White
+        Write-Host ""
+        Write-Host "Check status: https://github.com/$($Config.Repository)/settings/actions/runners" -ForegroundColor Cyan
+        Write-Host ""
+        return $true
+    } else {
+        Write-Host ""
+        Write-Host "Failed to start new runner" -ForegroundColor Red
+        return $false
+    }
+}
+
 function Invoke-DockerManagement {
     param(
         [Parameter(Mandatory=$true)]
@@ -412,6 +501,7 @@ function Invoke-DockerManagement {
         Write-Host "5. Remove container"
         Write-Host "6. View container logs"
         Write-Host "7. Bulk deploy (multiple containers)"
+        Write-Host "8. Rebuild and restart runner (auto)"
         Write-Host "0. Back"
         Write-Host ""
         
@@ -526,6 +616,13 @@ function Invoke-DockerManagement {
                     $message = "Bulk Deployment Completed`n`nRepository: $($Config.Repository)`nContainers deployed: $count"
                     Send-TelegramNotification -TelegramConfig (ConvertTo-TelegramConfigObject $telegramConfig) -Message $message -Type "Success"
                 }
+            }
+            "8" {
+                $imageTag = Read-Host "Enter image tag (default: github-runner:latest)"
+                if ([string]::IsNullOrEmpty($imageTag)) {
+                    $imageTag = "github-runner:latest"
+                }
+                Update-DockerRunner -Config $Config -ImageTag $imageTag
             }
         }
         
