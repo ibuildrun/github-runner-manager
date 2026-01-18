@@ -1,0 +1,32 @@
+services:
+  universal-runner:
+    build:
+      context: .
+      dockerfile: runner.Dockerfile
+    container_name: universal-runner
+    restart: unless-stopped
+    # Используем host network чтобы раннер имел тот же IP что и хост машина
+    # Это позволит SSH подключаться к серверу с того же IP что и локальная машина
+    network_mode: host
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - RUNNER_NAME=universal-docker-runner
+      - RUNNER_WORKDIR=_work
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - runner-npm-cache:/home/runner/.npm
+      - runner-composer-cache:/home/runner/.composer
+    deploy:
+      resources:
+        limits:
+          cpus: '2.5'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+volumes:
+  runner-npm-cache:
+    driver: local
+  runner-composer-cache:
+    driver: local
