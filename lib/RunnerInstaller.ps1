@@ -122,17 +122,36 @@ function Uninstall-GitHubRunner {
     if (Test-Path "$RunnerPath\.runner") {
         Write-Host "Removing configuration..." -ForegroundColor Yellow
         Set-Location $RunnerPath
-        $removeToken = Get-RunnerRegistrationToken -Token $Config.GitHubToken -Repository $Config.Repository
-        if ($removeToken) {
-            & ".\config.cmd" remove --token $removeToken
+        
+        # Only try to remove from GitHub if we have valid config
+        if ($Config.IsValid()) {
+            $removeToken = Get-RunnerRegistrationToken -Token $Config.GitHubToken -Repository $Config.Repository
+            if ($removeToken) {
+                & ".\config.cmd" remove --token $removeToken
+            }
+        } else {
+            Write-Host "Skipping GitHub removal (no valid configuration)" -ForegroundColor Yellow
+            # Just remove local config
+            if (Test-Path "$RunnerPath\.runner") {
+                Remove-Item "$RunnerPath\.runner" -Force -ErrorAction SilentlyContinue
+            }
+            if (Test-Path "$RunnerPath\.credentials") {
+                Remove-Item "$RunnerPath\.credentials" -Force -ErrorAction SilentlyContinue
+            }
         }
     }
     
     # Remove directory
     if (Test-Path $RunnerPath) {
         Write-Host "Removing files..." -ForegroundColor Yellow
-        Remove-Item -Path $RunnerPath -Recurse -Force
+        try {
+            Remove-Item -Path $RunnerPath -Recurse -Force -ErrorAction Stop
+            Write-Host "Runner uninstalled" -ForegroundColor Green
+        } catch {
+            Write-Host "Could not remove all files. Some may be in use." -ForegroundColor Yellow
+            Write-Host "You can manually delete: $RunnerPath" -ForegroundColor Gray
+        }
+    } else {
+        Write-Host "Runner directory not found" -ForegroundColor Yellow
     }
-    
-    Write-Host "Runner uninstalled" -ForegroundColor Green
 }
