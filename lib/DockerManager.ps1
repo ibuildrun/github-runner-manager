@@ -182,13 +182,19 @@ function Start-DockerRunner {
         }
     }
     
+    # Generate runner name based on repository if not provided
     if (-not $RunnerName) {
-        $RunnerName = "docker-runner-$(Get-Date -Format 'yyyyMMddHHmmss')"
+        $repoName = $Config.Repository -replace '.*/([^/]+)$', '$1'  # Extract repo name from owner/repo
+        $timestamp = Get-Date -Format 'yyyyMMddHHmmss'
+        $RunnerName = "$repoName-runner-$timestamp"
     }
     
+    Write-Host ""
     Write-Host "Starting Docker runner container..." -ForegroundColor Cyan
-    Write-Host "Repository: $($Config.Repository)" -ForegroundColor Gray
-    Write-Host "Runner name: $RunnerName" -ForegroundColor Gray
+    Write-Host "Repository: $($Config.Repository)" -ForegroundColor Green
+    Write-Host "Runner name: $RunnerName" -ForegroundColor Green
+    Write-Host "Image: $ImageTag" -ForegroundColor Gray
+    Write-Host ""
     
     # Build environment variables
     $envArgs = @(
@@ -203,10 +209,15 @@ function Start-DockerRunner {
     }
     
     # Start container
+    Write-Host "Creating container..." -ForegroundColor Yellow
     $containerId = docker run -d --name $RunnerName @envArgs $ImageTag
     
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "$([char]0x2713) Container started: $containerId" -ForegroundColor Green
+        Write-Host "$([char]0x2713) Container started successfully" -ForegroundColor Green
+        Write-Host "Container ID: $containerId" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "Waiting for runner to register with GitHub..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 5
         
         # Save container info
         $dockerRunner = [DockerRunnerConfig]::new()
@@ -218,9 +229,29 @@ function Start-DockerRunner {
         
         $Config.AddDockerRunner($dockerRunner)
         
+        # Send Telegram notification if configured
+        $telegramConfig = $Config.GetTelegramConfig()
+        if ($telegramConfig -and $telegramConfig.Enabled) {
+            Send-TelegramNotification `
+                -Config $telegramConfig `
+                -Type "Success" `
+                -Title "Docker Runner Deployed" `
+                -Message "Repository: $($Config.Repository)`nRunner: $RunnerName`nContainer: $($containerId.Substring(0,12))"
+        }
+        
+        Write-Host "$([char]0x2713) Runner should appear in GitHub within 1-2 minutes" -ForegroundColor Green
+        Write-Host "Check: https://github.com/$($Config.Repository)/settings/actions/runners" -ForegroundColor Cyan
+        Write-Host ""
+        
         return $dockerRunner
     } else {
         Write-Host "$([char]0x2717) Failed to start container" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Troubleshooting:" -ForegroundColor Yellow
+        Write-Host "  1. Check Docker logs: docker logs $RunnerName" -ForegroundColor Gray
+        Write-Host "  2. Verify token has 'repo' and 'workflow' scopes" -ForegroundColor Gray
+        Write-Host "  3. Ensure repository exists: $($Config.Repository)" -ForegroundColor Gray
+        Write-Host ""
         return $null
     }
 }
@@ -381,7 +412,27 @@ function Invoke-DockerManagement {
                 if ($runners.Count -eq 0) {
                     Write-Host "No containers found" -ForegroundColor Yellow
                 } else {
-                    $runners | Format-Table -Property ContainerId, Name, Status, Image -AutoSize
+                    # Get saved runner configs to show repository info
+                    $savedRunners = $Config.GetDockerRunners()
+                    
+                    # Enhance runner info with repository
+                    $enhancedRunners = $runners | ForEach-Object {
+                        $container = $_
+                        $saved = $savedRunners | Where-Object { $_.ContainerId -like "$($container.ContainerId)*" -or $_.RunnerName -eq $container.Name }
+                        
+                        [PSCustomObject]@{
+                            ContainerId = $container.ContainerId.Substring(0, [Math]::Min(12, $container.ContainerId.Length))
+                            Name = $container.Name
+                            Repository = if ($saved) { $saved.Repository } else { "N/A" }
+                            Status = $container.Status
+                            Image = $container.Image
+                        }
+                    }
+                    
+                    $enhancedRunners | Format-Table -Property ContainerId, Name, Repository, Status, Image -AutoSize
+                    
+                    Write-Host ""
+                    Write-Host "Tip: Runner names now include repository (e.g., 'avyx-runner-...')" -ForegroundColor Gray
                 }
             }
             "4" {
@@ -412,11 +463,15 @@ function Invoke-DockerManagement {
                     $imageTag = "github-runner:latest"
                 }
                 
+                # Extract repo name for container naming
+                $repoName = $Config.Repository -replace '.*/([^/]+)$', '$1'
+                
                 Write-Host ""
-                Write-Host "Deploying $count containers..." -ForegroundColor Cyan
+                Write-Host "Deploying $count containers for repository: $($Config.Repository)..." -ForegroundColor Cyan
+                Write-Host ""
                 
                 for ($i = 1; $i -le $count; $i++) {
-                    $runnerName = "docker-runner-bulk-$i-$(Get-Date -Format 'yyyyMMddHHmmss')"
+                    $runnerName = "$repoName-runner-$i-$(Get-Date -Format 'yyyyMMddHHmmss')"
                     Write-Host "[$i/$count] Starting $runnerName..." -ForegroundColor Gray
                     Start-DockerRunner -Config $Config -RunnerName $runnerName -ImageTag $imageTag | Out-Null
                     Start-Sleep -Seconds 2
