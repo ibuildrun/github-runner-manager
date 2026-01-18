@@ -599,7 +599,7 @@ function Update-DockerRunner {
         
         # Auto-cleanup offline runners
         Write-Host "Cleaning up offline runners..." -ForegroundColor Cyan
-        Remove-OfflineRunners -Token $Config.GitHubToken -Repository $Config.Repository -DryRun:$false
+        Remove-OfflineRunners -Token $Config.GitHubToken -Repository $Config.Repository -Force
         
         Write-Host "Check status: https://github.com/$($Config.Repository)/settings/actions/runners" -ForegroundColor Cyan
         Write-Host ""

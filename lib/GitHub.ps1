@@ -106,7 +106,9 @@ function Remove-GitHubRunner {
         [Parameter(Mandatory=$true)]
         [string]$Repository,
         [Parameter(Mandatory=$true)]
-        [int]$RunnerId
+        [int]$RunnerId,
+        [Parameter(Mandatory=$false)]
+        [switch]$Force
     )
     
     try {
@@ -115,10 +117,20 @@ function Remove-GitHubRunner {
             "Accept" = "application/vnd.github.v3+json"
         }
         
-        Invoke-RestMethod -Uri "https://api.github.com/repos/$Repository/actions/runners/$RunnerId" -Headers $headers -Method Delete | Out-Null
+        $uri = "https://api.github.com/repos/$Repository/actions/runners/$RunnerId"
+        if ($Force) {
+            $uri += "?force=true"
+        }
+        
+        Invoke-RestMethod -Uri $uri -Headers $headers -Method Delete | Out-Null
         return $true
     } catch {
-        Write-Host "Error removing runner $RunnerId : $_" -ForegroundColor Red
+        $errorMessage = $_.Exception.Message
+        if ($errorMessage -match '"message":"([^"]+)"') {
+            Write-Host "  Error: $($matches[1])" -ForegroundColor Red
+        } else {
+            Write-Host "  Error removing runner $RunnerId : $errorMessage" -ForegroundColor Red
+        }
         return $false
     }
 }
@@ -130,7 +142,9 @@ function Remove-OfflineRunners {
         [Parameter(Mandatory=$true)]
         [string]$Repository,
         [Parameter(Mandatory=$false)]
-        [switch]$DryRun
+        [switch]$DryRun,
+        [Parameter(Mandatory=$false)]
+        [switch]$Force
     )
     
     Write-Host ""
@@ -154,37 +168,75 @@ function Remove-OfflineRunners {
     Write-Host "Found $($offlineRunners.Count) offline runner(s):" -ForegroundColor Yellow
     Write-Host ""
     
+    # Separate runners with active jobs
+    $runnersWithJobs = @()
+    $runnersWithoutJobs = @()
+    
     foreach ($runner in $offlineRunners) {
-        Write-Host "  - $($runner.name) (ID: $($runner.id))" -ForegroundColor Gray
+        $status = if ($runner.busy) { "BUSY" } else { "IDLE" }
+        $color = if ($runner.busy) { "Yellow" } else { "Gray" }
+        Write-Host "  - $($runner.name) (ID: $($runner.id)) [$status]" -ForegroundColor $color
+        
+        if ($runner.busy) {
+            $runnersWithJobs += $runner
+        } else {
+            $runnersWithoutJobs += $runner
+        }
     }
     
     Write-Host ""
     
     if ($DryRun) {
         Write-Host "Dry run mode - no runners will be removed" -ForegroundColor Yellow
+        if ($runnersWithJobs.Count -gt 0) {
+            Write-Host "Note: $($runnersWithJobs.Count) runner(s) marked as BUSY would require --force flag" -ForegroundColor Yellow
+        }
         return
     }
     
-    $confirm = Read-Host "Remove all offline runners? (y/N)"
-    if ($confirm -ne 'y') {
-        Write-Host "Cancelled" -ForegroundColor Yellow
-        return
+    # Ask about regular runners
+    if ($runnersWithoutJobs.Count -gt 0) {
+        Write-Host "Remove $($runnersWithoutJobs.Count) idle offline runner(s)? (y/N)" -ForegroundColor Cyan
+        $confirm = Read-Host
+        
+        if ($confirm -eq 'y') {
+            Write-Host ""
+            foreach ($runner in $runnersWithoutJobs) {
+                Write-Host "Removing: $($runner.name)..." -ForegroundColor Yellow
+                if (Remove-GitHubRunner -Token $Token -Repository $Repository -RunnerId $runner.id) {
+                    Write-Host "  $([char]0x2713) Removed" -ForegroundColor Green
+                } else {
+                    Write-Host "  $([char]0x2717) Failed" -ForegroundColor Red
+                }
+            }
+        }
     }
     
-    Write-Host ""
-    $removedCount = 0
-    
-    foreach ($runner in $offlineRunners) {
-        Write-Host "Removing: $($runner.name)..." -ForegroundColor Yellow
-        if (Remove-GitHubRunner -Token $Token -Repository $Repository -RunnerId $runner.id) {
-            Write-Host "  $([char]0x2713) Removed" -ForegroundColor Green
-            $removedCount++
+    # Ask about busy runners
+    if ($runnersWithJobs.Count -gt 0) {
+        Write-Host ""
+        Write-Host "WARNING: $($runnersWithJobs.Count) runner(s) are marked as BUSY (possibly stuck)" -ForegroundColor Yellow
+        Write-Host "These runners are offline but GitHub thinks they're running jobs." -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "Force remove stuck runners? This will cancel any associated jobs. (y/N)" -ForegroundColor Red
+        $forceConfirm = Read-Host
+        
+        if ($forceConfirm -eq 'y') {
+            Write-Host ""
+            foreach ($runner in $runnersWithJobs) {
+                Write-Host "Force removing: $($runner.name)..." -ForegroundColor Red
+                if (Remove-GitHubRunner -Token $Token -Repository $Repository -RunnerId $runner.id -Force) {
+                    Write-Host "  $([char]0x2713) Force removed" -ForegroundColor Green
+                } else {
+                    Write-Host "  $([char]0x2717) Failed" -ForegroundColor Red
+                }
+            }
         } else {
-            Write-Host "  $([char]0x2717) Failed" -ForegroundColor Red
+            Write-Host "Skipped busy runners. They will remain until jobs complete or timeout." -ForegroundColor Yellow
         }
     }
     
     Write-Host ""
-    Write-Host "$([char]0x2713) Removed $removedCount of $($offlineRunners.Count) offline runner(s)" -ForegroundColor Green
+    Write-Host "$([char]0x2713) Cleanup complete" -ForegroundColor Green
     Write-Host ""
 }
