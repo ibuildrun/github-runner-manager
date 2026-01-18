@@ -16,7 +16,7 @@ function Test-SSHConnection {
     )
     
     Write-Host ""
-    Write-Host "Testing SSH connection to $User@$Host:$Port..." -ForegroundColor Yellow
+    Write-Host "Testing SSH connection to ${User}@${Host}:${Port}..." -ForegroundColor Yellow
     
     try {
         # Create temporary script for SSH test
