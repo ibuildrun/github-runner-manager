@@ -83,12 +83,14 @@ if ($containerRunning -eq "universal-runner") {
         Write-Host ""
         Write-Host "Rebuilding runner (this may take a few minutes)..." -ForegroundColor Yellow
         docker-compose down
-        docker-compose up -d --build --no-cache
+        docker-compose build --no-cache
+        docker-compose up -d
         Write-Host "Runner rebuilt" -ForegroundColor Green
     }
 } else {
     Write-Host "Starting runner..." -ForegroundColor Yellow
-    docker-compose up -d --build --no-cache
+    docker-compose build --no-cache
+    docker-compose up -d
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "Runner started successfully" -ForegroundColor Green
