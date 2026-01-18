@@ -61,8 +61,8 @@ RUN curl -o actions-runner-linux-x64-2.331.0.tar.gz -L \
     rm actions-runner-linux-x64-2.331.0.tar.gz
 
 # Копирование entrypoint скрипта
-COPY --chown=runner:runner runner-multi-entrypoint.sh /home/runner/entrypoint.sh
-RUN chmod +x /home/runner/entrypoint.sh
+COPY runner-multi-entrypoint.sh /home/runner/entrypoint.sh
+RUN chown runner:runner /home/runner/entrypoint.sh && chmod +x /home/runner/entrypoint.sh
 
 # Проверка версий
 RUN node --version && \
