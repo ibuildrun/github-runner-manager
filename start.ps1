@@ -77,9 +77,18 @@ if ($containerRunning -eq "universal-runner") {
         docker-compose restart
         Write-Host "Runner restarted" -ForegroundColor Green
     }
+    
+    $rebuildResponse = Read-Host "Rebuild image? (y/N)"
+    if ($rebuildResponse -eq "y" -or $rebuildResponse -eq "Y") {
+        Write-Host ""
+        Write-Host "Rebuilding runner (this may take a few minutes)..." -ForegroundColor Yellow
+        docker-compose down
+        docker-compose up -d --build --no-cache
+        Write-Host "Runner rebuilt" -ForegroundColor Green
+    }
 } else {
     Write-Host "Starting runner..." -ForegroundColor Yellow
-    docker-compose up -d --build
+    docker-compose up -d --build --no-cache
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "Runner started successfully" -ForegroundColor Green
