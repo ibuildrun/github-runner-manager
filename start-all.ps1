@@ -21,13 +21,17 @@ foreach ($path in $dockerPaths) {
 }
 
 if (-not $dockerFound) {
-    Write-Host "Docker Desktop not found in standard locations" -ForegroundColor Yellow
-    Write-Host "Please start Docker Desktop manually and press Enter..." -ForegroundColor Yellow
-    Read-Host
+    Write-Host "Please start Docker Desktop manually..." -ForegroundColor Cyan
+    Read-Host "Press Enter when Docker is running"
 }
 
-Write-Host "Waiting for Docker to start (30 seconds)..." -ForegroundColor Yellow
-Start-Sleep -Seconds 30
+Write-Host ""
+Write-Host "Waiting for Docker to be ready..." -ForegroundColor Yellow
+for ($i = 1; $i -le 30; $i++) {
+    Write-Host -NoNewline "."
+    Start-Sleep -Seconds 1
+}
+Write-Host ""
 
 Write-Host "Starting runner setup..." -ForegroundColor Cyan
 .\start.ps1
