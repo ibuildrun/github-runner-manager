@@ -427,13 +427,46 @@ function Restart-DockerRunner {
     if (-not (Test-DockerInstalled)) { return $false }
     if (-not (Test-DockerRunning)) { return $false }
     
+    # Try to find container by partial name/ID
+    $allContainers = docker ps -a --format "{{.ID}}|{{.Names}}" 2>&1
+    $matchedContainer = $null
+    
+    foreach ($line in $allContainers) {
+        if ($line -match '^([^|]+)\|(.+)$') {
+            $id = $matches[1]
+            $name = $matches[2]
+            
+            if ($id -like "*$ContainerIdOrName*" -or $name -like "*$ContainerIdOrName*") {
+                $matchedContainer = @{
+                    Id = $id
+                    Name = $name
+                }
+                break
+            }
+        }
+    }
+    
+    if (-not $matchedContainer) {
+        Write-Host ""
+        Write-Host "Container not found: $ContainerIdOrName" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Available containers:" -ForegroundColor Yellow
+        docker ps -a --format "table {{.Names}}\t{{.ID}}\t{{.Status}}"
+        Write-Host ""
+        return $false
+    }
+    
+    $containerId = $matchedContainer.Id
+    $containerName = $matchedContainer.Name
+    
     Write-Host ""
     Write-Host "=== Restarting Container ===" -ForegroundColor Cyan
-    Write-Host "Container: $ContainerIdOrName" -ForegroundColor White
+    Write-Host "Container: $containerName" -ForegroundColor White
+    Write-Host "ID: $containerId" -ForegroundColor Gray
     Write-Host ""
     
     Write-Host "Restarting..." -ForegroundColor Yellow
-    docker restart $ContainerIdOrName 2>&1 | Out-Null
+    docker restart $containerId 2>&1 | Out-Null
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "$([char]0x2713) Container restarted successfully" -ForegroundColor Green
@@ -443,7 +476,7 @@ function Restart-DockerRunner {
         
         Write-Host ""
         Write-Host "Recent logs:" -ForegroundColor Cyan
-        docker logs --tail 15 $ContainerIdOrName
+        docker logs --tail 15 $containerId
         
         Write-Host ""
         Write-Host "$([char]0x2713) Restart complete" -ForegroundColor Green
@@ -463,14 +496,49 @@ function Test-DockerRunnerHealth {
     if (-not (Test-DockerInstalled)) { return }
     if (-not (Test-DockerRunning)) { return }
     
+    # Try to find container by partial name/ID
+    $allContainers = docker ps -a --format "{{.ID}}|{{.Names}}" 2>&1
+    $matchedContainer = $null
+    
+    foreach ($line in $allContainers) {
+        if ($line -match '^([^|]+)\|(.+)$') {
+            $id = $matches[1]
+            $name = $matches[2]
+            
+            # Match by partial ID or name
+            if ($id -like "*$ContainerIdOrName*" -or $name -like "*$ContainerIdOrName*") {
+                $matchedContainer = @{
+                    Id = $id
+                    Name = $name
+                }
+                break
+            }
+        }
+    }
+    
+    if (-not $matchedContainer) {
+        Write-Host ""
+        Write-Host "Container not found: $ContainerIdOrName" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Available containers:" -ForegroundColor Yellow
+        docker ps -a --format "table {{.Names}}\t{{.ID}}\t{{.Status}}"
+        Write-Host ""
+        return
+    }
+    
+    $containerId = $matchedContainer.Id
+    $containerName = $matchedContainer.Name
+    
     Write-Host ""
     Write-Host "=== Runner Health Check ===" -ForegroundColor Cyan
+    Write-Host "Container: $containerName" -ForegroundColor White
+    Write-Host "ID: $containerId" -ForegroundColor Gray
     Write-Host ""
     
     # Get container status
-    $status = docker inspect --format='{{.State.Status}}' $ContainerIdOrName 2>&1
-    $running = docker inspect --format='{{.State.Running}}' $ContainerIdOrName 2>&1
-    $startedAt = docker inspect --format='{{.State.StartedAt}}' $ContainerIdOrName 2>&1
+    $status = docker inspect --format='{{.State.Status}}' $containerId 2>&1
+    $running = docker inspect --format='{{.State.Running}}' $containerId 2>&1
+    $startedAt = docker inspect --format='{{.State.StartedAt}}' $containerId 2>&1
     
     Write-Host "Status: $status" -ForegroundColor $(if ($status -eq "running") { "Green" } else { "Red" })
     Write-Host "Running: $running" -ForegroundColor $(if ($running -eq "true") { "Green" } else { "Red" })
@@ -479,7 +547,7 @@ function Test-DockerRunnerHealth {
     
     # Check recent logs for "Listening for Jobs"
     Write-Host "Checking runner activity..." -ForegroundColor Yellow
-    $recentLogs = docker logs --tail 50 $ContainerIdOrName 2>&1 | Out-String
+    $recentLogs = docker logs --tail 50 $containerId 2>&1 | Out-String
     
     if ($recentLogs -match "Listening for Jobs") {
         $lastListening = ($recentLogs -split "`n" | Where-Object { $_ -match "Listening for Jobs" } | Select-Object -Last 1)
@@ -708,10 +776,14 @@ function Invoke-DockerManagement {
                 }
             }
             "4" {
+                Write-Host ""
+                Write-Host "Tip: You can use partial container name or ID" -ForegroundColor Gray
                 $containerName = Read-Host "Enter container ID or name"
                 Stop-DockerRunner -ContainerIdOrName $containerName
             }
             "5" {
+                Write-Host ""
+                Write-Host "Tip: You can use partial container name or ID" -ForegroundColor Gray
                 $containerName = Read-Host "Enter container ID or name"
                 $force = Read-Host "Force remove? (y/n)"
                 
@@ -722,6 +794,8 @@ function Invoke-DockerManagement {
                 }
             }
             "6" {
+                Write-Host ""
+                Write-Host "Tip: You can use partial container name or ID" -ForegroundColor Gray
                 $containerName = Read-Host "Enter container ID or name"
                 $lines = Read-Host "Number of lines (default: 50)"
                 if ([string]::IsNullOrEmpty($lines)) { $lines = 50 }
@@ -767,10 +841,14 @@ function Invoke-DockerManagement {
                 Update-DockerRunner -Config $Config -ImageTag $imageTag
             }
             "9" {
+                Write-Host ""
+                Write-Host "Tip: You can use partial container name or ID (e.g., 'avyx' or '0d81')" -ForegroundColor Gray
                 $containerName = Read-Host "Enter container ID or name"
                 Restart-DockerRunner -ContainerIdOrName $containerName
             }
             "10" {
+                Write-Host ""
+                Write-Host "Tip: You can use partial container name or ID (e.g., 'avyx' or '0d81')" -ForegroundColor Gray
                 $containerName = Read-Host "Enter container ID or name"
                 Test-DockerRunnerHealth -ContainerIdOrName $containerName
             }
