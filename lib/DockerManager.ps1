@@ -37,13 +37,36 @@ function Test-DockerRunning {
     }
 }
 
+function Get-LatestRunnerVersion {
+    try {
+        Write-Host "Fetching latest runner version from GitHub..." -ForegroundColor Yellow
+        $response = Invoke-RestMethod -Uri "https://api.github.com/repos/actions/runner/releases/latest" -Method Get
+        $version = $response.tag_name -replace '^v', ''
+        Write-Host "Latest version: $version" -ForegroundColor Green
+        return $version
+    } catch {
+        Write-Host "Failed to fetch latest version, using fallback: 2.321.0" -ForegroundColor Yellow
+        return "2.321.0"
+    }
+}
+
 function New-DockerRunnerImage {
     param(
         [Parameter(Mandatory=$false)]
-        [string]$ImageTag = "github-runner:latest"
+        [string]$ImageTag = "github-runner:latest",
+        
+        [Parameter(Mandatory=$false)]
+        [string]$RunnerVersion = $null
     )
     
     Write-Host "Creating Docker image for GitHub runner..." -ForegroundColor Cyan
+    
+    # Auto-detect latest version if not specified
+    if ([string]::IsNullOrEmpty($RunnerVersion)) {
+        $RunnerVersion = Get-LatestRunnerVersion
+    }
+    
+    Write-Host "Using runner version: $RunnerVersion" -ForegroundColor Cyan
     
     $dockerfile = @"
 FROM ubuntu:22.04
@@ -101,7 +124,7 @@ RUN useradd -m -s /bin/bash runner && \
 WORKDIR /home/runner
 
 # Download and extract GitHub Actions runner
-ARG RUNNER_VERSION="2.311.0"
+ARG RUNNER_VERSION="$RunnerVersion"
 RUN curl -o actions-runner-linux-x64.tar.gz -L \
     https://github.com/actions/runner/releases/download/v`${RUNNER_VERSION}/actions-runner-linux-x64-`${RUNNER_VERSION}.tar.gz && \
     tar xzf actions-runner-linux-x64.tar.gz && \
@@ -395,6 +418,95 @@ function Show-DockerRunnerLogs {
     docker logs --tail $Lines $ContainerIdOrName
 }
 
+function Restart-DockerRunner {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$ContainerIdOrName
+    )
+    
+    if (-not (Test-DockerInstalled)) { return $false }
+    if (-not (Test-DockerRunning)) { return $false }
+    
+    Write-Host ""
+    Write-Host "=== Restarting Container ===" -ForegroundColor Cyan
+    Write-Host "Container: $ContainerIdOrName" -ForegroundColor White
+    Write-Host ""
+    
+    Write-Host "Restarting..." -ForegroundColor Yellow
+    docker restart $ContainerIdOrName 2>&1 | Out-Null
+    
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "$([char]0x2713) Container restarted successfully" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "Waiting for runner to initialize..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 5
+        
+        Write-Host ""
+        Write-Host "Recent logs:" -ForegroundColor Cyan
+        docker logs --tail 15 $ContainerIdOrName
+        
+        Write-Host ""
+        Write-Host "$([char]0x2713) Restart complete" -ForegroundColor Green
+        return $true
+    } else {
+        Write-Host "$([char]0x2717) Failed to restart container" -ForegroundColor Red
+        return $false
+    }
+}
+
+function Test-DockerRunnerHealth {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$ContainerIdOrName
+    )
+    
+    if (-not (Test-DockerInstalled)) { return }
+    if (-not (Test-DockerRunning)) { return }
+    
+    Write-Host ""
+    Write-Host "=== Runner Health Check ===" -ForegroundColor Cyan
+    Write-Host ""
+    
+    # Get container status
+    $status = docker inspect --format='{{.State.Status}}' $ContainerIdOrName 2>&1
+    $running = docker inspect --format='{{.State.Running}}' $ContainerIdOrName 2>&1
+    $startedAt = docker inspect --format='{{.State.StartedAt}}' $ContainerIdOrName 2>&1
+    
+    Write-Host "Status: $status" -ForegroundColor $(if ($status -eq "running") { "Green" } else { "Red" })
+    Write-Host "Running: $running" -ForegroundColor $(if ($running -eq "true") { "Green" } else { "Red" })
+    Write-Host "Started: $startedAt" -ForegroundColor Gray
+    Write-Host ""
+    
+    # Check recent logs for "Listening for Jobs"
+    Write-Host "Checking runner activity..." -ForegroundColor Yellow
+    $recentLogs = docker logs --tail 50 $ContainerIdOrName 2>&1 | Out-String
+    
+    if ($recentLogs -match "Listening for Jobs") {
+        $lastListening = ($recentLogs -split "`n" | Where-Object { $_ -match "Listening for Jobs" } | Select-Object -Last 1)
+        Write-Host "$([char]0x2713) Runner is listening: $lastListening" -ForegroundColor Green
+    } else {
+        Write-Host "$([char]0x2717) Runner not listening for jobs" -ForegroundColor Red
+    }
+    
+    # Check for running jobs
+    if ($recentLogs -match "Running job:") {
+        $runningJobs = ($recentLogs -split "`n" | Where-Object { $_ -match "Running job:" } | Select-Object -Last 3)
+        Write-Host ""
+        Write-Host "Recent jobs:" -ForegroundColor Cyan
+        $runningJobs | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
+    }
+    
+    # Check for errors
+    if ($recentLogs -match "Error|Failed|Exception") {
+        Write-Host ""
+        Write-Host "Errors detected in logs:" -ForegroundColor Red
+        $errors = ($recentLogs -split "`n" | Where-Object { $_ -match "Error|Failed|Exception" } | Select-Object -Last 5)
+        $errors | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
+    }
+    
+    Write-Host ""
+}
+
 function Update-DockerRunner {
     param(
         [Parameter(Mandatory=$true)]
@@ -413,7 +525,7 @@ function Update-DockerRunner {
     Write-Host "This will:" -ForegroundColor Yellow
     Write-Host "  1. Stop and remove old runner containers" -ForegroundColor Gray
     Write-Host "  2. Remove old Docker image" -ForegroundColor Gray
-    Write-Host "  3. Build new image with full stack (Node.js, PHP, Composer)" -ForegroundColor Gray
+    Write-Host "  3. Build new image with latest runner version" -ForegroundColor Gray
     Write-Host "  4. Start new runner container" -ForegroundColor Gray
     Write-Host ""
     
@@ -423,6 +535,10 @@ function Update-DockerRunner {
         return $false
     }
     
+    # Get latest runner version
+    $latestVersion = Get-LatestRunnerVersion
+    Write-Host ""
+    Write-Host "Will use runner version: $latestVersion" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "[1/4] Finding and stopping old containers using image..." -ForegroundColor Cyan
     
@@ -457,11 +573,11 @@ function Update-DockerRunner {
     }
     
     Write-Host ""
-    Write-Host "[3/4] Building new image with full stack..." -ForegroundColor Cyan
+    Write-Host "[3/4] Building new image with latest runner version..." -ForegroundColor Cyan
     Write-Host "  This will take 5-10 minutes..." -ForegroundColor Yellow
     Write-Host ""
     
-    if (-not (New-DockerRunnerImage -ImageTag $ImageTag)) {
+    if (-not (New-DockerRunnerImage -ImageTag $ImageTag -RunnerVersion $latestVersion)) {
         Write-Host ""
         Write-Host "Failed to build image" -ForegroundColor Red
         return $false
@@ -508,6 +624,8 @@ function Invoke-DockerManagement {
         Write-Host "6. View container logs"
         Write-Host "7. Bulk deploy (multiple containers)"
         Write-Host "8. Rebuild and restart runner (auto)"
+        Write-Host "9. Restart container (quick fix)"
+        Write-Host "10. Health check"
         Write-Host "0. Back"
         Write-Host ""
         
@@ -519,7 +637,19 @@ function Invoke-DockerManagement {
                 if ([string]::IsNullOrEmpty($imageTag)) {
                     $imageTag = "github-runner:latest"
                 }
-                New-DockerRunnerImage -ImageTag $imageTag
+                
+                Write-Host ""
+                Write-Host "Runner version options:" -ForegroundColor Cyan
+                Write-Host "  1. Auto-detect latest (recommended)" -ForegroundColor Green
+                Write-Host "  2. Specify version manually" -ForegroundColor Gray
+                $versionChoice = Read-Host "Select option (default: 1)"
+                
+                $runnerVersion = $null
+                if ($versionChoice -eq "2") {
+                    $runnerVersion = Read-Host "Enter runner version (e.g., 2.321.0)"
+                }
+                
+                New-DockerRunnerImage -ImageTag $imageTag -RunnerVersion $runnerVersion
             }
             "2" {
                 $runnerName = Read-Host "Enter runner name (leave empty for auto-generated)"
@@ -629,6 +759,14 @@ function Invoke-DockerManagement {
                     $imageTag = "github-runner:latest"
                 }
                 Update-DockerRunner -Config $Config -ImageTag $imageTag
+            }
+            "9" {
+                $containerName = Read-Host "Enter container ID or name"
+                Restart-DockerRunner -ContainerIdOrName $containerName
+            }
+            "10" {
+                $containerName = Read-Host "Enter container ID or name"
+                Test-DockerRunnerHealth -ContainerIdOrName $containerName
             }
         }
         
