@@ -161,14 +161,20 @@ if [ -z "`$REGISTRATION_TOKEN" ] || [ "`$REGISTRATION_TOKEN" = "null" ]; then
     exit 1
 fi
 
-# Configure runner
-./config.sh --url "https://github.com/`$GITHUB_REPOSITORY" \
-    --token "`$REGISTRATION_TOKEN" \
-    --name "`${RUNNER_NAME:-docker-runner-`$(hostname)}" \
-    --work _work \
-    --labels docker,self-hosted \
-    --unattended \
-    --replace
+# Check if runner is already configured
+if [ ! -f ".runner" ]; then
+    echo "Configuring runner..."
+    # Configure runner
+    ./config.sh --url "https://github.com/`$GITHUB_REPOSITORY" \
+        --token "`$REGISTRATION_TOKEN" \
+        --name "`${RUNNER_NAME:-docker-runner-`$(hostname)}" \
+        --work _work \
+        --labels docker,self-hosted \
+        --unattended \
+        --replace
+else
+    echo "Runner already configured, skipping configuration..."
+fi
 
 # Cleanup function
 cleanup() {

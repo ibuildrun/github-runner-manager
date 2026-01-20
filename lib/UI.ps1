@@ -5,7 +5,7 @@ function Show-Banner {
     Write-Host "  ╔═══════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
     Write-Host "  ║                                                           ║" -ForegroundColor Cyan
     Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host "🚀 OCTOPUS RUNNER MANAGER" -NoNewline -ForegroundColor White
+    Write-Host "  OCTOPUS RUNNER MANAGER" -NoNewline -ForegroundColor White
     Write-Host "                        ║" -ForegroundColor Cyan
     Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
     Write-Host "Advanced CI/CD Infrastructure Suite" -NoNewline -ForegroundColor Gray
@@ -33,11 +33,11 @@ function Show-MainMenu {
     $platformName = $Config.GetPlatformDisplayName()
     $platformEmoji = if ($Config.Platform -eq "gitlab") { "🦊" } else { "🐙" }
     
-    Write-Host "  $platformEmoji Platform: " -NoNewline -ForegroundColor Cyan
+    Write-Host "  $platformName Platform: " -NoNewline -ForegroundColor Cyan
     Write-Host "$platformName" -ForegroundColor White
     
     if ($Config.Platform -eq "gitlab" -and $Config.InstanceUrl) {
-        Write-Host "  🌐 Instance: " -NoNewline -ForegroundColor Cyan
+        Write-Host "  Instance: " -NoNewline -ForegroundColor Cyan
         Write-Host "$($Config.InstanceUrl)" -ForegroundColor White
     }
     
@@ -45,32 +45,33 @@ function Show-MainMenu {
         $targetLabel = if ($Config.Platform -eq "gitlab") { 
             if ($Config.TargetType -eq "group") { "Group" } else { "Project" }
         } else { "Repository" }
-        Write-Host "  📦 ${targetLabel}: " -NoNewline -ForegroundColor Cyan
+        Write-Host "  ${targetLabel}: " -NoNewline -ForegroundColor Cyan
         Write-Host "$($Config.Repository)" -ForegroundColor Green
     } else {
-        Write-Host "  📦 Target: " -NoNewline -ForegroundColor Cyan
+        Write-Host "  Target: " -NoNewline -ForegroundColor Cyan
         Write-Host "Not configured" -ForegroundColor Yellow
     }
     
     $tokenStatus = if ($Config.GitHubToken) { "Configured" } else { "Not set" }
     $tokenColor = if ($Config.GitHubToken) { "Green" } else { "Yellow" }
-    Write-Host "  🔑 Token: " -NoNewline -ForegroundColor Cyan
+    Write-Host "  Token: " -NoNewline -ForegroundColor Cyan
     Write-Host "$tokenStatus" -ForegroundColor $tokenColor
     
     # Show Telegram status
     $telegramConfig = $Config.GetTelegramConfig()
     if ($telegramConfig.Enabled) {
-        Write-Host "  📱 Telegram: " -NoNewline -ForegroundColor Cyan
-        Write-Host "Enabled ($($telegramConfig.ChatIds.Count) users)" -ForegroundColor Green
+        Write-Host "  Telegram: " -NoNewline -ForegroundColor Cyan
+        $userCount = $telegramConfig.ChatIds.Count
+        Write-Host "Enabled ($userCount)" -ForegroundColor Green
     } else {
-        Write-Host "  📱 Telegram: " -NoNewline -ForegroundColor Cyan
+        Write-Host "  Telegram: " -NoNewline -ForegroundColor Cyan
         Write-Host "Disabled" -ForegroundColor Gray
     }
     
     # Show Docker runners count
     $dockerRunners = $Config.GetDockerRunners()
     if ($dockerRunners.Count -gt 0) {
-        Write-Host "  🐳 Docker: " -NoNewline -ForegroundColor Cyan
+        Write-Host "  Docker: " -NoNewline -ForegroundColor Cyan
         Write-Host "$($dockerRunners.Count) container(s)" -ForegroundColor Green
     }
     
@@ -88,7 +89,7 @@ function Show-MainMenu {
         Write-Host "    3. Configure GitHub Secrets (Auto)" -ForegroundColor Yellow
     }
     
-    Write-Host "    4. Switch Platform (GitHub <-> GitLab)" -ForegroundColor Magenta
+    Write-Host "    4. Switch Platform (GitHub / GitLab)" -ForegroundColor Magenta
     Write-Host ""
     Write-Host "  Runner Management" -ForegroundColor Cyan
     Write-Host "    5. Install Runner" -ForegroundColor White
@@ -112,7 +113,7 @@ function Show-MainMenu {
     Write-Host "    15. Telegram Notifications" -ForegroundColor White
     Write-Host "    16. Docker Container Management" -ForegroundColor White
     Write-Host ""
-    Write-Host "    17. Help & Quick Start Guide" -ForegroundColor Yellow
+    Write-Host "    17. Help and Quick Start Guide" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "    0. Exit" -ForegroundColor White
     Write-Host ""
@@ -243,11 +244,11 @@ function Show-HelpGuide {
     Clear-Host
     Show-Banner
     
-    Write-Host "  📚 QUICK START GUIDE" -ForegroundColor Cyan
+    Write-Host "  QUICK START GUIDE" -ForegroundColor Cyan
     Write-Host "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
     Write-Host ""
     
-    Write-Host "  🚀 FIRST TIME SETUP" -ForegroundColor Yellow
+    Write-Host "  FIRST TIME SETUP" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "    1. Configure Token (Option 1)" -ForegroundColor White
     Write-Host "       • Get token from: https://github.com/settings/tokens" -ForegroundColor Gray
@@ -263,7 +264,7 @@ function Show-HelpGuide {
     Write-Host "       • Starts the runner process" -ForegroundColor Gray
     Write-Host ""
     
-    Write-Host "  🐳 DOCKER RUNNERS" -ForegroundColor Yellow
+    Write-Host "  DOCKER RUNNERS" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "    Option 16 → Docker Container Management" -ForegroundColor White
     Write-Host ""
@@ -287,7 +288,7 @@ function Show-HelpGuide {
     Write-Host "      Remove dead runners from GitHub" -ForegroundColor DarkGray
     Write-Host ""
     
-    Write-Host "  💡 TIPS & TRICKS" -ForegroundColor Yellow
+    Write-Host "  TIPS AND TRICKS" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "    • Partial container search:" -ForegroundColor White
     Write-Host "      Type 'avyx' instead of full ID '0d81c0b7d764...'" -ForegroundColor Gray
@@ -302,7 +303,7 @@ function Show-HelpGuide {
     Write-Host "      Option 16 → 7 for bulk deployment" -ForegroundColor Gray
     Write-Host ""
     
-    Write-Host "  🔧 TROUBLESHOOTING" -ForegroundColor Yellow
+    Write-Host "  TROUBLESHOOTING" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "    Runner stuck or offline?" -ForegroundColor White
     Write-Host "      → Option 16 → 9 (Quick restart)" -ForegroundColor Green
@@ -315,7 +316,7 @@ function Show-HelpGuide {
     Write-Host "      → Option 16 → 11 (Cleanup offline runners)" -ForegroundColor Green
     Write-Host ""
     
-    Write-Host "  📖 DOCUMENTATION" -ForegroundColor Yellow
+    Write-Host "  DOCUMENTATION" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "    GitHub: https://github.com/ibuildrun/runner-manager" -ForegroundColor Cyan
     Write-Host "    Issues: https://github.com/ibuildrun/runner-manager/issues" -ForegroundColor Cyan
