@@ -1,7 +1,6 @@
 # GitHub Secrets Management Module
 
 . "$PSScriptRoot\GitHub.ps1"
-. "$PSScriptRoot\UI.ps1"
 
 function Test-SSHConnection {
     param(

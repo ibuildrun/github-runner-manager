@@ -1,7 +1,6 @@
 # Auto-Start Management Module
 
 . "$PSScriptRoot\Config.ps1"
-. "$PSScriptRoot\UI.ps1"
 
 function Enable-RunnerAutoStart {
     param(

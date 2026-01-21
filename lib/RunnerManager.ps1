@@ -1,7 +1,5 @@
 # Runner Process Management Module
 
-. "$PSScriptRoot\UI.ps1"
-
 function Start-GitHubRunner {
     param(
         [Parameter(Mandatory=$true)]

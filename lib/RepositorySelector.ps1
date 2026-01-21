@@ -1,8 +1,5 @@
 # Repository Selection Module
 
-. "$PSScriptRoot\GitHub.ps1"
-. "$PSScriptRoot\UI.ps1"
-
 # Load platform providers if not already loaded
 if (-not ([System.Management.Automation.PSTypeName]'IPlatformProvider').Type) {
     . "$PSScriptRoot\PlatformProvider.ps1"
