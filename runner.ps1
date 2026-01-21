@@ -68,12 +68,22 @@ $configPath = "$PSScriptRoot\.runner-config.json"
 $config = [RunnerConfig]::new($configPath)
 $config.Load()
 
-# Determine runner path: use active runner if available, otherwise use parameter
-$effectiveRunnerPath = $RunnerPath
-$activeRunner = $config.GetActiveRunner()
-if ($activeRunner) {
-    $effectiveRunnerPath = $activeRunner.Path
+# Helper function to safely get effective runner path
+function Get-EffectiveRunnerPath {
+    param($Config, $DefaultPath)
+    try {
+        $activeRunner = $Config.GetActiveRunner()
+        if ($activeRunner -and $activeRunner.Path) {
+            return $activeRunner.Path
+        }
+    } catch {
+        # Ignore errors, use default
+    }
+    return $DefaultPath
 }
+
+# Determine runner path: use active runner if available, otherwise use parameter
+$effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
 
 # Main menu loop
 do {
@@ -137,11 +147,7 @@ do {
             if ($config.Platform -eq "gitlab") {
                 Install-GitLabRunner -Config $config -RunnerPath "C:\gitlab-runner"
             } else {
-                # Update effective runner path before installation
-                $activeRunner = $config.GetActiveRunner()
-                if ($activeRunner) {
-                    $effectiveRunnerPath = $activeRunner.Path
-                }
+                $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
                 Install-GitHubRunner -Config $config -RunnerPath $effectiveRunnerPath
             }
         }
@@ -149,11 +155,7 @@ do {
             if ($config.Platform -eq "gitlab") {
                 Start-GitLabRunner -RunnerPath "C:\gitlab-runner"
             } else {
-                # Update effective runner path before starting
-                $activeRunner = $config.GetActiveRunner()
-                if ($activeRunner) {
-                    $effectiveRunnerPath = $activeRunner.Path
-                }
+                $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
                 Start-GitHubRunner -Config $config -RunnerPath $effectiveRunnerPath
             }
             
@@ -169,11 +171,7 @@ do {
             if ($config.Platform -eq "gitlab") {
                 Stop-GitLabRunner
             } else {
-                # Update effective runner path before stopping
-                $activeRunner = $config.GetActiveRunner()
-                if ($activeRunner) {
-                    $effectiveRunnerPath = $activeRunner.Path
-                }
+                $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
                 Stop-GitHubRunner -Config $config -RunnerPath $effectiveRunnerPath
             }
             
@@ -189,11 +187,7 @@ do {
             if ($config.Platform -eq "gitlab") {
                 Get-GitLabRunnerStatus -RunnerPath "C:\gitlab-runner"
             } else {
-                # Update effective runner path before checking status
-                $activeRunner = $config.GetActiveRunner()
-                if ($activeRunner) {
-                    $effectiveRunnerPath = $activeRunner.Path
-                }
+                $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
                 Show-Status -Config $config -RunnerPath $effectiveRunnerPath
             }
         }
@@ -201,11 +195,7 @@ do {
             if ($config.Platform -eq "gitlab") {
                 Show-GitLabRunnerLogs -RunnerPath "C:\gitlab-runner"
             } else {
-                # Update effective runner path before viewing logs
-                $activeRunner = $config.GetActiveRunner()
-                if ($activeRunner) {
-                    $effectiveRunnerPath = $activeRunner.Path
-                }
+                $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
                 Show-RunnerLogs -RunnerPath $effectiveRunnerPath
             }
         }
@@ -228,11 +218,7 @@ do {
             }
         }
         "11" { 
-            # Update effective runner path before enabling auto-start
-            $activeRunner = $config.GetActiveRunner()
-            if ($activeRunner) {
-                $effectiveRunnerPath = $activeRunner.Path
-            }
+            $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
             Enable-RunnerAutoStart -Config $config -RunnerPath $effectiveRunnerPath
         }
         "12" { 
@@ -242,11 +228,7 @@ do {
             if ($config.Platform -eq "gitlab") {
                 Uninstall-GitLabRunner -RunnerPath "C:\gitlab-runner"
             } else {
-                # Update effective runner path before uninstalling
-                $activeRunner = $config.GetActiveRunner()
-                if ($activeRunner) {
-                    $effectiveRunnerPath = $activeRunner.Path
-                }
+                $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
                 Uninstall-GitHubRunner -Config $config -RunnerPath $effectiveRunnerPath
             }
         }
@@ -261,11 +243,7 @@ do {
         }
         "17" {
             Invoke-MultiRunnerMenu -Config $config
-            # Reload effective runner path after multi-runner menu
-            $activeRunner = $config.GetActiveRunner()
-            if ($activeRunner) {
-                $effectiveRunnerPath = $activeRunner.Path
-            }
+            $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
         }
         "18" {
             Show-HelpGuide

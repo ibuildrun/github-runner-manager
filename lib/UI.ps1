@@ -1,4 +1,4 @@
-# User Interface Module
+﻿# User Interface Module
 
 function Show-Banner {
     Write-Host ""
