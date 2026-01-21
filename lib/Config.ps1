@@ -154,7 +154,7 @@ class RunnerConfig {
         $this.FullConfig | ConvertTo-Json -Depth 10 | Set-Content $this.ConfigFile -Force
         
         Write-Host ""
-        Write-Host "✓ Existing runner migrated to multi-runner system" -ForegroundColor Green
+        Write-Host "вњ“ Existing runner migrated to multi-runner system" -ForegroundColor Green
         Write-Host "  Path: $defaultPath" -ForegroundColor Gray
         Write-Host "  Name: Default Runner (Migrated)" -ForegroundColor Gray
         Write-Host ""
