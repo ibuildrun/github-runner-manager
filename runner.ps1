@@ -61,11 +61,19 @@ function L {
 . "$PSScriptRoot\lib\DockerManager.ps1"
 . "$PSScriptRoot\lib\GitLabRunnerInstaller.ps1"
 . "$PSScriptRoot\lib\GitLabRunnerManager.ps1"
+. "$PSScriptRoot\lib\MultiRunnerManager.ps1"
 
 # Initialize configuration
 $configPath = "$PSScriptRoot\.runner-config.json"
 $config = [RunnerConfig]::new($configPath)
 $config.Load()
+
+# Determine runner path: use active runner if available, otherwise use parameter
+$effectiveRunnerPath = $RunnerPath
+$activeRunner = $config.GetActiveRunner()
+if ($activeRunner) {
+    $effectiveRunnerPath = $activeRunner.Path
+}
 
 # Main menu loop
 do {
@@ -129,14 +137,24 @@ do {
             if ($config.Platform -eq "gitlab") {
                 Install-GitLabRunner -Config $config -RunnerPath "C:\gitlab-runner"
             } else {
-                Install-GitHubRunner -Config $config -RunnerPath $RunnerPath
+                # Update effective runner path before installation
+                $activeRunner = $config.GetActiveRunner()
+                if ($activeRunner) {
+                    $effectiveRunnerPath = $activeRunner.Path
+                }
+                Install-GitHubRunner -Config $config -RunnerPath $effectiveRunnerPath
             }
         }
         "6" { 
             if ($config.Platform -eq "gitlab") {
                 Start-GitLabRunner -RunnerPath "C:\gitlab-runner"
             } else {
-                Start-GitHubRunner -Config $config -RunnerPath $RunnerPath
+                # Update effective runner path before starting
+                $activeRunner = $config.GetActiveRunner()
+                if ($activeRunner) {
+                    $effectiveRunnerPath = $activeRunner.Path
+                }
+                Start-GitHubRunner -Config $config -RunnerPath $effectiveRunnerPath
             }
             
             # Send Telegram notification
@@ -151,7 +169,12 @@ do {
             if ($config.Platform -eq "gitlab") {
                 Stop-GitLabRunner
             } else {
-                Stop-GitHubRunner -Config $config -RunnerPath $RunnerPath
+                # Update effective runner path before stopping
+                $activeRunner = $config.GetActiveRunner()
+                if ($activeRunner) {
+                    $effectiveRunnerPath = $activeRunner.Path
+                }
+                Stop-GitHubRunner -Config $config -RunnerPath $effectiveRunnerPath
             }
             
             # Send Telegram notification
@@ -166,14 +189,24 @@ do {
             if ($config.Platform -eq "gitlab") {
                 Get-GitLabRunnerStatus -RunnerPath "C:\gitlab-runner"
             } else {
-                Show-Status -Config $config -RunnerPath $RunnerPath
+                # Update effective runner path before checking status
+                $activeRunner = $config.GetActiveRunner()
+                if ($activeRunner) {
+                    $effectiveRunnerPath = $activeRunner.Path
+                }
+                Show-Status -Config $config -RunnerPath $effectiveRunnerPath
             }
         }
         "9" { 
             if ($config.Platform -eq "gitlab") {
                 Show-GitLabRunnerLogs -RunnerPath "C:\gitlab-runner"
             } else {
-                Show-RunnerLogs -RunnerPath $RunnerPath
+                # Update effective runner path before viewing logs
+                $activeRunner = $config.GetActiveRunner()
+                if ($activeRunner) {
+                    $effectiveRunnerPath = $activeRunner.Path
+                }
+                Show-RunnerLogs -RunnerPath $effectiveRunnerPath
             }
         }
         "10" {
@@ -195,7 +228,12 @@ do {
             }
         }
         "11" { 
-            Enable-RunnerAutoStart -Config $config -RunnerPath $RunnerPath
+            # Update effective runner path before enabling auto-start
+            $activeRunner = $config.GetActiveRunner()
+            if ($activeRunner) {
+                $effectiveRunnerPath = $activeRunner.Path
+            }
+            Enable-RunnerAutoStart -Config $config -RunnerPath $effectiveRunnerPath
         }
         "12" { 
             Disable-RunnerAutoStart -Config $config
@@ -204,7 +242,12 @@ do {
             if ($config.Platform -eq "gitlab") {
                 Uninstall-GitLabRunner -RunnerPath "C:\gitlab-runner"
             } else {
-                Uninstall-GitHubRunner -Config $config -RunnerPath $RunnerPath
+                # Update effective runner path before uninstalling
+                $activeRunner = $config.GetActiveRunner()
+                if ($activeRunner) {
+                    $effectiveRunnerPath = $activeRunner.Path
+                }
+                Uninstall-GitHubRunner -Config $config -RunnerPath $effectiveRunnerPath
             }
         }
         "14" { 
@@ -217,6 +260,14 @@ do {
             Invoke-DockerManagement -Config $config
         }
         "17" {
+            Invoke-MultiRunnerMenu -Config $config
+            # Reload effective runner path after multi-runner menu
+            $activeRunner = $config.GetActiveRunner()
+            if ($activeRunner) {
+                $effectiveRunnerPath = $activeRunner.Path
+            }
+        }
+        "18" {
             Show-HelpGuide
         }
         "0" { 

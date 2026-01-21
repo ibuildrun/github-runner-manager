@@ -75,6 +75,21 @@ function Show-MainMenu {
         Write-Host "$($dockerRunners.Count) container(s)" -ForegroundColor Green
     }
     
+    # Show local runners count and active runner
+    $localRunners = $Config.GetLocalRunners()
+    if ($localRunners.Count -gt 0) {
+        Write-Host "  Local Runners: " -NoNewline -ForegroundColor Cyan
+        Write-Host "$($localRunners.Count) configured" -ForegroundColor Green
+        
+        $activeRunner = $Config.GetActiveRunner()
+        if ($activeRunner) {
+            Write-Host "  Active Runner: " -NoNewline -ForegroundColor Cyan
+            Write-Host "$($activeRunner.Name)" -ForegroundColor Yellow
+            Write-Host "    Path: " -NoNewline -ForegroundColor Cyan
+            Write-Host "$($activeRunner.Path)" -ForegroundColor Gray
+        }
+    }
+    
     Write-Host ""
     Write-Host "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
     Write-Host ""
@@ -112,8 +127,9 @@ function Show-MainMenu {
     Write-Host "  Infrastructure Suite" -ForegroundColor Magenta
     Write-Host "    15. Telegram Notifications" -ForegroundColor White
     Write-Host "    16. Docker Container Management" -ForegroundColor White
+    Write-Host "    17. Multi-Runner Management" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "    17. Help and Quick Start Guide" -ForegroundColor Yellow
+    Write-Host "    18. Help and Quick Start Guide" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "    0. Exit" -ForegroundColor White
     Write-Host ""

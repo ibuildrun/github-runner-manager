@@ -18,6 +18,9 @@ class RunnerConfig {
     [int]$ConfigVersion
     [string]$Language
     
+    # Multi-runner support
+    [string]$ActiveRunnerId
+    
     RunnerConfig([string]$configPath) {
         $this.ConfigFile = $configPath
         $this.GitHubToken = $null
@@ -28,6 +31,7 @@ class RunnerConfig {
         $this.TargetType = "project"
         $this.ConfigVersion = 2
         $this.Language = "en"  # Default language
+        $this.ActiveRunnerId = $null
     }
     
     [void] Load() {
@@ -63,6 +67,7 @@ class RunnerConfig {
                 $this.TargetType = if ($this.FullConfig.TargetType) { $this.FullConfig.TargetType } else { "project" }
                 $this.ConfigVersion = if ($this.FullConfig.ConfigVersion) { $this.FullConfig.ConfigVersion } else { 2 }
                 $this.Language = if ($this.FullConfig.Language) { $this.FullConfig.Language } else { "en" }
+                $this.ActiveRunnerId = if ($this.FullConfig.ActiveRunnerId) { $this.FullConfig.ActiveRunnerId } else { $null }
                 
                 $this.Repository = $this.FullConfig.Repository
                 
@@ -134,6 +139,7 @@ class RunnerConfig {
             Repository = $this.Repository
             TokenStorage = $tokenStorage
             LastUpdated = (Get-Date).ToString("o")
+            ActiveRunnerId = $this.ActiveRunnerId
         }
         
         # Preserve existing sections
@@ -143,6 +149,9 @@ class RunnerConfig {
             }
             if ($this.FullConfig.DockerRunners) {
                 $config.DockerRunners = $this.FullConfig.DockerRunners
+            }
+            if ($this.FullConfig.LocalRunners) {
+                $config.LocalRunners = $this.FullConfig.LocalRunners
             }
         }
         
@@ -259,6 +268,62 @@ class RunnerConfig {
             return @()
         }
         return $this.FullConfig.DockerRunners
+    }
+    
+    [void] AddLocalRunner([hashtable]$runner) {
+        if (-not $this.FullConfig) {
+            $this.Load()
+        }
+        
+        if (-not $this.FullConfig.LocalRunners) {
+            $this.FullConfig | Add-Member -NotePropertyName "LocalRunners" -NotePropertyValue @() -Force
+        }
+        
+        $this.FullConfig.LocalRunners += $runner
+        $this.FullConfig | ConvertTo-Json -Depth 10 | Set-Content $this.ConfigFile -Force
+    }
+    
+    [array] GetLocalRunners() {
+        if (-not $this.FullConfig -or -not $this.FullConfig.LocalRunners) {
+            return @()
+        }
+        return $this.FullConfig.LocalRunners
+    }
+    
+    [object] GetActiveRunner() {
+        $runners = $this.GetLocalRunners()
+        if ($runners.Count -eq 0) {
+            return $null
+        }
+        
+        if ($this.ActiveRunnerId) {
+            $runner = $runners | Where-Object { $_.Id -eq $this.ActiveRunnerId }
+            if ($runner) {
+                return $runner
+            }
+        }
+        
+        # Return first runner if no active runner set
+        return $runners[0]
+    }
+    
+    [void] SetActiveRunner([string]$runnerId) {
+        $this.ActiveRunnerId = $runnerId
+        $this.Save($this.FullConfig.TokenStorage)
+    }
+    
+    [void] RemoveLocalRunner([string]$runnerId) {
+        if (-not $this.FullConfig -or -not $this.FullConfig.LocalRunners) {
+            return
+        }
+        
+        $this.FullConfig.LocalRunners = @($this.FullConfig.LocalRunners | Where-Object { $_.Id -ne $runnerId })
+        
+        if ($this.ActiveRunnerId -eq $runnerId) {
+            $this.ActiveRunnerId = $null
+        }
+        
+        $this.FullConfig | ConvertTo-Json -Depth 10 | Set-Content $this.ConfigFile -Force
     }
     
     [void] Clear() {
