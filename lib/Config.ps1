@@ -97,6 +97,67 @@ class RunnerConfig {
                 $this.GitHubToken = $env:GITLAB_TOKEN
             }
         }
+        
+        # Auto-migrate existing runner installation
+        $this.MigrateExistingRunner()
+    }
+    
+    # Auto-migrate existing runner from C:\actions-runner
+    [void] MigrateExistingRunner() {
+        $defaultPath = "C:\actions-runner"
+        
+        # Check if we already have local runners configured
+        $existingRunners = $this.GetLocalRunners()
+        if ($existingRunners.Count -gt 0) {
+            return  # Already migrated
+        }
+        
+        # Check if runner exists at default path
+        if (-not (Test-Path "$defaultPath\run.cmd")) {
+            return  # No runner to migrate
+        }
+        
+        # Check if we have repository configured
+        if ([string]::IsNullOrEmpty($this.Repository)) {
+            return  # Can't migrate without repository info
+        }
+        
+        # Create runner entry for existing installation
+        $runnerId = "migrated-" + [guid]::NewGuid().ToString().Substring(0, 8)
+        $runner = @{
+            Id = $runnerId
+            Name = "Default Runner (Migrated)"
+            Path = $defaultPath
+            Repository = $this.Repository
+            Platform = $this.Platform
+            Created = (Get-Date).ToString("o")
+            Status = "Installed"
+        }
+        
+        # Add to config
+        if (-not $this.FullConfig) {
+            $this.FullConfig = @{
+                Platform = $this.Platform
+                Repository = $this.Repository
+                LocalRunners = @()
+            }
+        }
+        
+        if (-not $this.FullConfig.LocalRunners) {
+            $this.FullConfig | Add-Member -NotePropertyName "LocalRunners" -NotePropertyValue @() -Force
+        }
+        
+        $this.FullConfig.LocalRunners += $runner
+        $this.ActiveRunnerId = $runnerId
+        
+        # Save config
+        $this.FullConfig | ConvertTo-Json -Depth 10 | Set-Content $this.ConfigFile -Force
+        
+        Write-Host ""
+        Write-Host "✓ Existing runner migrated to multi-runner system" -ForegroundColor Green
+        Write-Host "  Path: $defaultPath" -ForegroundColor Gray
+        Write-Host "  Name: Default Runner (Migrated)" -ForegroundColor Gray
+        Write-Host ""
     }
     
     # Migration method from v1 to v2

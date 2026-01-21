@@ -4,9 +4,9 @@ function Show-Banner {
     Write-Host ""
     Write-Host "  ╔═══════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
     Write-Host "  ║                                                           ║" -ForegroundColor Cyan
-    Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host "  OCTOPUS RUNNER MANAGER" -NoNewline -ForegroundColor White
-    Write-Host "                        ║" -ForegroundColor Cyan
+    Write-Host "  ║     " -NoNewline -ForegroundColor Cyan
+    Write-Host "OCTOPUS RUNNER MANAGER" -NoNewline -ForegroundColor White
+    Write-Host "                          ║" -ForegroundColor Cyan
     Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
     Write-Host "Advanced CI/CD Infrastructure Suite" -NoNewline -ForegroundColor Gray
     Write-Host "                  ║" -ForegroundColor Cyan
