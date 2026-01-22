@@ -100,12 +100,14 @@ function Show-MainMenu {
     }
     
     Write-Host ""
+    Write-Host "  $(L 'status_loading')" -NoNewline -ForegroundColor DarkGray
     
     # Show Docker runners count (real running containers with "runner" in name)
+    $dockerCount = 0
     try {
         # Use Start-Job with timeout to prevent hanging
         $dockerJob = Start-Job -ScriptBlock { docker ps --format "{{.Names}}" 2>$null }
-        $completed = Wait-Job -Job $dockerJob -Timeout 3
+        $completed = Wait-Job -Job $dockerJob -Timeout 2
         
         if ($completed) {
             $allContainers = Receive-Job -Job $dockerJob
@@ -113,11 +115,7 @@ function Show-MainMenu {
             
             if ($LASTEXITCODE -eq 0 -and $allContainers) {
                 $runnerContainers = $allContainers | Where-Object { $_ -match "runner" }
-                $containerCount = ($runnerContainers | Measure-Object).Count
-                if ($containerCount -gt 0) {
-                    Write-Host "  $(L 'status_docker') Runners (Containers): " -NoNewline -ForegroundColor Magenta
-                    Write-Host "$containerCount $(L 'status_running')" -ForegroundColor Green
-                }
+                $dockerCount = ($runnerContainers | Measure-Object).Count
             }
         } else {
             # Timeout - kill the job
@@ -129,6 +127,15 @@ function Show-MainMenu {
     
     # Show local runners count and active runner
     $localRunners = $Config.GetLocalRunners()
+    
+    # Clear loading message
+    Write-Host "`r                              `r" -NoNewline
+    
+    if ($dockerCount -gt 0) {
+        Write-Host "  $(L 'status_docker') Runners (Containers): " -NoNewline -ForegroundColor Magenta
+        Write-Host "$dockerCount $(L 'status_running')" -ForegroundColor Green
+    }
+    
     if ($localRunners.Count -gt 0) {
         Write-Host "  $(L 'status_local_runners') (Windows): " -NoNewline -ForegroundColor Cyan
         Write-Host "$($localRunners.Count) $(L 'status_runners_configured')" -ForegroundColor Green

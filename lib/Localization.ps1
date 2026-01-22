@@ -1046,3 +1046,8 @@ $script:Translations["ru"]["secrets_complete_options"] = "Завершите о�
 $script:Translations["ru"]["secrets_gh_auth_failed"] = "Не удалось аутентифицироваться с GitHub CLI"
 $script:Translations["ru"]["secrets_check_token"] = "Проверьте ваш токен и попробуйте снова"
 $script:Translations["ru"]["secrets_error_setting"] = "Ошибка установки secret {0}"
+
+
+# Loading status
+$script:Translations["en"]["status_loading"] = "Loading status..."
+$script:Translations["ru"]["status_loading"] = "Загрузка статуса..."
