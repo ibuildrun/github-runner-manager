@@ -292,84 +292,84 @@ function Show-HelpGuide {
     Clear-Host
     Show-Banner
     
-    Write-Host "  QUICK START GUIDE" -ForegroundColor Cyan
+    Write-Host "  $(L 'help_title')" -ForegroundColor Cyan
     Write-Host "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
     Write-Host ""
     
-    Write-Host "  FIRST TIME SETUP" -ForegroundColor Yellow
+    Write-Host "  $(L 'help_first_setup')" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "    1. Configure Token (Option 1)" -ForegroundColor White
-    Write-Host "       • Get token from: https://github.com/settings/tokens" -ForegroundColor Gray
-    Write-Host "       • Required scopes: repo, workflow" -ForegroundColor Gray
+    Write-Host "    1. $(L 'help_step1')" -ForegroundColor White
+    Write-Host "       • $(L 'help_step1_detail1')" -ForegroundColor Gray
+    Write-Host "       • $(L 'help_step1_detail2')" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "    2. Select Repository (Option 2)" -ForegroundColor White
-    Write-Host "       • Search and select your repository" -ForegroundColor Gray
+    Write-Host "    2. $(L 'help_step2')" -ForegroundColor White
+    Write-Host "       • $(L 'help_step2_detail')" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "    3. Install Runner (Option 5)" -ForegroundColor White
-    Write-Host "       • Downloads and configures runner" -ForegroundColor Gray
+    Write-Host "    3. $(L 'help_step3')" -ForegroundColor White
+    Write-Host "       • $(L 'help_step3_detail')" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "    4. Start Runner (Option 6)" -ForegroundColor White
-    Write-Host "       • Starts the runner process" -ForegroundColor Gray
-    Write-Host ""
-    
-    Write-Host "  DOCKER RUNNERS" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "    Option 16 → Docker Container Management" -ForegroundColor White
-    Write-Host ""
-    Write-Host "    • Option 1: Build runner image" -ForegroundColor Gray
-    Write-Host "      Creates Docker image with Node.js, PHP, Composer" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "    • Option 2: Start new container" -ForegroundColor Gray
-    Write-Host "      Launches isolated runner in Docker" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "    • Option 8: Rebuild and restart (recommended)" -ForegroundColor Green
-    Write-Host "      Auto-updates to latest runner version" -ForegroundColor DarkGray
-    Write-Host "      Cleans up old offline runners" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "    • Option 9: Quick restart" -ForegroundColor Gray
-    Write-Host "      Fast restart without rebuild" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "    • Option 10: Health check" -ForegroundColor Gray
-    Write-Host "      Diagnose runner issues" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "    • Option 11: Cleanup offline runners" -ForegroundColor Gray
-    Write-Host "      Remove dead runners from GitHub" -ForegroundColor DarkGray
+    Write-Host "    4. $(L 'help_step4')" -ForegroundColor White
+    Write-Host "       • $(L 'help_step4_detail')" -ForegroundColor Gray
     Write-Host ""
     
-    Write-Host "  TIPS AND TRICKS" -ForegroundColor Yellow
+    Write-Host "  $(L 'help_docker')" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "    • Partial container search:" -ForegroundColor White
-    Write-Host "      Type 'avyx' instead of full ID '0d81c0b7d764...'" -ForegroundColor Gray
+    Write-Host "    $(L 'help_docker_menu')" -ForegroundColor White
     Write-Host ""
-    Write-Host "    • Auto-start on boot:" -ForegroundColor White
-    Write-Host "      Use Option 11 to enable automatic runner start" -ForegroundColor Gray
+    Write-Host "    • $(L 'help_docker_build')" -ForegroundColor Gray
+    Write-Host "      $(L 'help_docker_build_detail')" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "    • Telegram notifications:" -ForegroundColor White
-    Write-Host "      Option 15 to get alerts about runner events" -ForegroundColor Gray
+    Write-Host "    • $(L 'help_docker_start')" -ForegroundColor Gray
+    Write-Host "      $(L 'help_docker_start_detail')" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "    • Multiple runners:" -ForegroundColor White
-    Write-Host "      Option 16 → 7 for bulk deployment" -ForegroundColor Gray
+    Write-Host "    • $(L 'help_docker_rebuild')" -ForegroundColor Green
+    Write-Host "      $(L 'help_docker_rebuild_detail1')" -ForegroundColor DarkGray
+    Write-Host "      $(L 'help_docker_rebuild_detail2')" -ForegroundColor DarkGray
     Write-Host ""
-    
-    Write-Host "  TROUBLESHOOTING" -ForegroundColor Yellow
+    Write-Host "    • $(L 'help_docker_restart')" -ForegroundColor Gray
+    Write-Host "      $(L 'help_docker_restart_detail')" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "    Runner stuck or offline?" -ForegroundColor White
-    Write-Host "      → Option 16 → 9 (Quick restart)" -ForegroundColor Green
+    Write-Host "    • $(L 'help_docker_health')" -ForegroundColor Gray
+    Write-Host "      $(L 'help_docker_health_detail')" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "    Jobs queuing but not running?" -ForegroundColor White
-    Write-Host "      → Option 16 → 10 (Health check)" -ForegroundColor Green
-    Write-Host "      → Option 16 → 8 (Rebuild with latest version)" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "    Old runners accumulating?" -ForegroundColor White
-    Write-Host "      → Option 16 → 11 (Cleanup offline runners)" -ForegroundColor Green
+    Write-Host "    • $(L 'help_docker_cleanup')" -ForegroundColor Gray
+    Write-Host "      $(L 'help_docker_cleanup_detail')" -ForegroundColor DarkGray
     Write-Host ""
     
-    Write-Host "  DOCUMENTATION" -ForegroundColor Yellow
+    Write-Host "  $(L 'help_tips')" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "    • $(L 'help_tip_search')" -ForegroundColor White
+    Write-Host "      $(L 'help_tip_search_detail')" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "    • $(L 'help_tip_autostart')" -ForegroundColor White
+    Write-Host "      $(L 'help_tip_autostart_detail')" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "    • $(L 'help_tip_telegram')" -ForegroundColor White
+    Write-Host "      $(L 'help_tip_telegram_detail')" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "    • $(L 'help_tip_multiple')" -ForegroundColor White
+    Write-Host "      $(L 'help_tip_multiple_detail')" -ForegroundColor Gray
+    Write-Host ""
+    
+    Write-Host "  $(L 'help_troubleshooting')" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "    $(L 'help_trouble_stuck')" -ForegroundColor White
+    Write-Host "      $(L 'help_trouble_stuck_fix')" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "    $(L 'help_trouble_queuing')" -ForegroundColor White
+    Write-Host "      $(L 'help_trouble_queuing_fix1')" -ForegroundColor Green
+    Write-Host "      $(L 'help_trouble_queuing_fix2')" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "    $(L 'help_trouble_accumulating')" -ForegroundColor White
+    Write-Host "      $(L 'help_trouble_accumulating_fix')" -ForegroundColor Green
+    Write-Host ""
+    
+    Write-Host "  $(L 'help_documentation')" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "    GitHub: https://github.com/ibuildrun/runner-manager" -ForegroundColor Cyan
     Write-Host "    Issues: https://github.com/ibuildrun/runner-manager/issues" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
     Write-Host ""
-    Read-Host "  Press Enter to return to main menu"
+    Read-Host "  $(L 'help_press_enter')"
 }
