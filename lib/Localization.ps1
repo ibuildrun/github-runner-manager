@@ -1050,4 +1050,7 @@ $script:Translations["ru"]["secrets_error_setting"] = "Ошибка устано
 
 # Loading status
 $script:Translations["en"]["status_loading"] = "Loading status..."
+$script:Translations["en"]["status_loading_docker"] = "Checking Docker containers"
+
 $script:Translations["ru"]["status_loading"] = "Загрузка статуса..."
+$script:Translations["ru"]["status_loading_docker"] = "Проверка Docker контейнеров"

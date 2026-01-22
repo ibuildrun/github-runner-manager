@@ -100,16 +100,31 @@ function Show-MainMenu {
     }
     
     Write-Host ""
-    Write-Host "  $(L 'status_loading')" -NoNewline -ForegroundColor DarkGray
+    
+    # Animated loading indicator
+    Write-Host "  $(L 'status_loading_docker')" -NoNewline -ForegroundColor DarkGray
     
     # Show Docker runners count (real running containers with "runner" in name)
     $dockerCount = 0
     try {
         # Use Start-Job with timeout to prevent hanging
         $dockerJob = Start-Job -ScriptBlock { docker ps --format "{{.Names}}" 2>$null }
-        $completed = Wait-Job -Job $dockerJob -Timeout 2
         
-        if ($completed) {
+        # Animate dots while waiting
+        $timeout = 2
+        $elapsed = 0
+        $dotCount = 0
+        while ($elapsed -lt $timeout) {
+            $completed = Wait-Job -Job $dockerJob -Timeout 0.3
+            if ($completed) { break }
+            
+            $dots = "." * (($dotCount % 3) + 1)
+            Write-Host "`r  $(L 'status_loading_docker')$dots   " -NoNewline -ForegroundColor DarkGray
+            $dotCount++
+            $elapsed += 0.3
+        }
+        
+        if ($completed -or (Wait-Job -Job $dockerJob -Timeout 0.1)) {
             $allContainers = Receive-Job -Job $dockerJob
             Remove-Job -Job $dockerJob -Force
             
@@ -125,16 +140,17 @@ function Show-MainMenu {
         # Docker not available, skip
     }
     
-    # Show local runners count and active runner
-    $localRunners = $Config.GetLocalRunners()
+    # Clear loading line
+    Write-Host "`r                                                    `r" -NoNewline
     
-    # Clear loading message
-    Write-Host "`r                              `r" -NoNewline
-    
+    # Show results
     if ($dockerCount -gt 0) {
         Write-Host "  $(L 'status_docker') Runners (Containers): " -NoNewline -ForegroundColor Magenta
         Write-Host "$dockerCount $(L 'status_running')" -ForegroundColor Green
     }
+    
+    # Show local runners count and active runner
+    $localRunners = $Config.GetLocalRunners()
     
     if ($localRunners.Count -gt 0) {
         Write-Host "  $(L 'status_local_runners') (Windows): " -NoNewline -ForegroundColor Cyan
