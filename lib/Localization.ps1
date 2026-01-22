@@ -122,6 +122,7 @@ $script:Translations = @{
         "status_process" = "Process"
         "status_running_pid" = "Running (PID: {0})"
         "status_not_running" = "Not running"
+        "status_running" = "running"
         
         # Multi-Runner
         "multirunner_title" = "Multi-Runner Management"
@@ -346,6 +347,7 @@ $script:Translations = @{
         "status_process" = "Процесс"
         "status_running_pid" = "Запущен (PID: {0})"
         "status_not_running" = "Не запущен"
+        "status_running" = "запущено"
         
         # Мульти-Runner
         "multirunner_title" = "Управление несколькими Runner'ами"

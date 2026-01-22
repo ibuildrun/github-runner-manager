@@ -101,11 +101,19 @@ function Show-MainMenu {
     
     Write-Host ""
     
-    # Show Docker runners count
-    $dockerRunners = $Config.GetDockerRunners()
-    if ($dockerRunners.Count -gt 0) {
-        Write-Host "  $(L 'status_docker') Runners (Containers): " -NoNewline -ForegroundColor Magenta
-        Write-Host "$($dockerRunners.Count) $(L 'status_containers')" -ForegroundColor Green
+    # Show Docker runners count (real running containers with "runner" in name)
+    try {
+        $allContainers = docker ps --format "{{.Names}}" 2>$null
+        if ($LASTEXITCODE -eq 0 -and $allContainers) {
+            $runnerContainers = $allContainers | Where-Object { $_ -match "runner" }
+            $containerCount = ($runnerContainers | Measure-Object).Count
+            if ($containerCount -gt 0) {
+                Write-Host "  $(L 'status_docker') Runners (Containers): " -NoNewline -ForegroundColor Magenta
+                Write-Host "$containerCount $(L 'status_running')" -ForegroundColor Green
+            }
+        }
+    } catch {
+        # Docker not available, skip
     }
     
     # Show local runners count and active runner
