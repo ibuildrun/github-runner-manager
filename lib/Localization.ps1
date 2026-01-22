@@ -90,6 +90,26 @@ $script:Translations = @{
         "repo_select_prompt" = "Select {0} (1-{1})"
         "repo_set_to" = "{0} set to: {1}"
         "repo_error_fetching" = "Error fetching {0}: {1}"
+        "repo_page_info" = "Page {0} of {1} (Total: {2} repositories)"
+        "repo_visibility_private" = "[Private]"
+        "repo_visibility_public" = "[Public]"
+        "repo_commands" = "Commands:"
+        "repo_cmd_select" = "[number] - Select repository"
+        "repo_cmd_next" = "n - Next page"
+        "repo_cmd_prev" = "p - Previous page"
+        "repo_cmd_search" = "s - Search/Filter"
+        "repo_cmd_clear" = "c - Clear filter"
+        "repo_cmd_quit" = "q - Quit"
+        "repo_enter_command" = "Enter command or number"
+        "repo_search_filter" = "Search filter: '{0}'"
+        "repo_invalid_selection" = "Invalid selection"
+        "repo_last_page" = "Already on last page"
+        "repo_first_page" = "Already on first page"
+        "repo_enter_search" = "Enter search term (searches in name and description)"
+        "repo_no_match_found" = "No repositories match '{0}'"
+        "repo_filter_cleared" = "Filter cleared"
+        "repo_invalid_command" = "Invalid command"
+        "repo_fetching_repos" = "Fetching your repositories..."
         
         # Runner Status
         "status_title" = "Runner Status"
@@ -150,6 +170,64 @@ $script:Translations = @{
         "docker_start_prompt" = "Please start Docker Desktop and try again"
         "docker_checking" = "Checking Docker status..."
         "docker_available" = "Docker is available"
+        
+        # Telegram
+        "telegram_config_title" = "Telegram Notification Configuration"
+        "telegram_current_status" = "Current status:"
+        "telegram_status_enabled" = "ENABLED"
+        "telegram_status_disabled" = "DISABLED"
+        "telegram_registered_users" = "Registered users: {0}"
+        "telegram_option_enable" = "Enable/Configure Telegram notifications"
+        "telegram_option_add_user" = "Add user (Chat ID)"
+        "telegram_option_remove_user" = "Remove user"
+        "telegram_option_test" = "Test notification"
+        "telegram_option_disable" = "Disable notifications"
+        "telegram_option_back" = "Back"
+        "telegram_enter_token" = "Enter Telegram Bot Token"
+        "telegram_bot_connected" = "Bot connected: @{0}"
+        "telegram_failed_connect" = "Failed to connect to Telegram bot: {0}"
+        "telegram_getting_chat_ids" = "Getting available chat IDs..."
+        "telegram_found_chat_ids" = "Found chat IDs: {0}"
+        "telegram_add_all_chats" = "Add all found chat IDs? (y/n)"
+        "telegram_enabled" = "Telegram notifications enabled!"
+        "telegram_configure_first" = "Please configure Telegram bot first (option 1)"
+        "telegram_enter_chat_id" = "Enter Chat ID to add"
+        "telegram_user_added" = "User added successfully!"
+        "telegram_user_exists" = "This user is already registered"
+        "telegram_no_users" = "No users registered"
+        "telegram_registered_users_list" = "Registered users:"
+        "telegram_enter_number_remove" = "Enter number to remove"
+        "telegram_user_removed" = "User removed successfully!"
+        "telegram_not_configured" = "Telegram notifications are not configured"
+        "telegram_sending_test" = "Sending test notification..."
+        "telegram_test_success" = "Successfully sent to {0} of {1} chats"
+        "telegram_test_failed" = "Failed to send to all chats"
+        "telegram_failed_chats" = "Failed chats:"
+        "telegram_chat_id" = "Chat ID: {0}"
+        "telegram_common_issues" = "Common issues:"
+        "telegram_issue_not_started" = "User hasn't started conversation with bot"
+        "telegram_solution_start" = "Solution: Open Telegram, search for your bot, click START"
+        "telegram_issue_blocked" = "User blocked the bot"
+        "telegram_solution_unblock" = "Solution: Unblock bot in Telegram settings"
+        "telegram_issue_invalid_id" = "Invalid Chat ID"
+        "telegram_solution_get_id" = "Solution: Get correct Chat ID from @userinfobot"
+        "telegram_disabled" = "Telegram notifications disabled"
+        "telegram_how_to_get_id" = "How to get your Telegram Chat ID"
+        "telegram_method_userinfobot" = "Method 1: Using @userinfobot"
+        "telegram_step_search" = "Open Telegram and search for @userinfobot"
+        "telegram_step_start" = "Start conversation and send /start"
+        "telegram_step_reply" = "Bot will reply with your Chat ID"
+        "telegram_method_auto" = "Method 2: Automatic detection"
+        "telegram_step_send_message" = "Send any message to your bot"
+        "telegram_step_detect" = "This tool will detect your Chat ID"
+        "telegram_checking_messages" = "Checking for messages..."
+        "telegram_found_chats" = "Found {0} chat(s):"
+        "telegram_username" = "Username: @{0}"
+        "telegram_name" = "Name: {0}"
+        "telegram_type" = "Type: {0}"
+        "telegram_no_messages" = "No messages found."
+        "telegram_send_message_prompt" = "Please send a message to your bot and try again."
+        "telegram_error_getting_ids" = "Failed to get chat IDs: {0}"
     }
     
     "ru" = @{
@@ -236,6 +314,26 @@ $script:Translations = @{
         "repo_select_prompt" = "Выберите {0} (1-{1})"
         "repo_set_to" = "{0} установлен на: {1}"
         "repo_error_fetching" = "Ошибка загрузки {0}: {1}"
+        "repo_page_info" = "Страница {0} из {1} (Всего: {2} репозиториев)"
+        "repo_visibility_private" = "[Приватный]"
+        "repo_visibility_public" = "[Публичный]"
+        "repo_commands" = "Команды:"
+        "repo_cmd_select" = "[номер] - Выбрать репозиторий"
+        "repo_cmd_next" = "n - Следующая страница"
+        "repo_cmd_prev" = "p - Предыдущая страница"
+        "repo_cmd_search" = "s - Поиск/Фильтр"
+        "repo_cmd_clear" = "c - Очистить фильтр"
+        "repo_cmd_quit" = "q - Выход"
+        "repo_enter_command" = "Введите команду или номер"
+        "repo_search_filter" = "Фильтр поиска: '{0}'"
+        "repo_invalid_selection" = "Неверный выбор"
+        "repo_last_page" = "Уже на последней странице"
+        "repo_first_page" = "Уже на первой странице"
+        "repo_enter_search" = "Введите поисковый запрос (поиск по названию и описанию)"
+        "repo_no_match_found" = "Нет репозиториев соответствующих '{0}'"
+        "repo_filter_cleared" = "Фильтр очищен"
+        "repo_invalid_command" = "Неверная команда"
+        "repo_fetching_repos" = "Загрузка ваших репозиториев..."
         
         # Статус Runner'а
         "status_title" = "Статус Runner'а"
@@ -296,6 +394,64 @@ $script:Translations = @{
         "docker_start_prompt" = "Пожалуйста, запустите Docker Desktop и попробуйте снова"
         "docker_checking" = "Проверка статуса Docker..."
         "docker_available" = "Docker доступен"
+        
+        # Telegram
+        "telegram_config_title" = "Настройка уведомлений Telegram"
+        "telegram_current_status" = "Текущий статус:"
+        "telegram_status_enabled" = "ВКЛЮЧЕНО"
+        "telegram_status_disabled" = "ОТКЛЮЧЕНО"
+        "telegram_registered_users" = "Зарегистрировано пользователей: {0}"
+        "telegram_option_enable" = "Включить/Настроить уведомления Telegram"
+        "telegram_option_add_user" = "Добавить пользователя (Chat ID)"
+        "telegram_option_remove_user" = "Удалить пользователя"
+        "telegram_option_test" = "Тестовое уведомление"
+        "telegram_option_disable" = "Отключить уведомления"
+        "telegram_option_back" = "Назад"
+        "telegram_enter_token" = "Введите токен Telegram бота"
+        "telegram_bot_connected" = "Бот подключен: @{0}"
+        "telegram_failed_connect" = "Не удалось подключиться к Telegram боту: {0}"
+        "telegram_getting_chat_ids" = "Получение доступных Chat ID..."
+        "telegram_found_chat_ids" = "Найдены Chat ID: {0}"
+        "telegram_add_all_chats" = "Добавить все найденные Chat ID? (y/n)"
+        "telegram_enabled" = "Уведомления Telegram включены!"
+        "telegram_configure_first" = "Пожалуйста, сначала настройте Telegram бота (опция 1)"
+        "telegram_enter_chat_id" = "Введите Chat ID для добавления"
+        "telegram_user_added" = "Пользователь успешно добавлен!"
+        "telegram_user_exists" = "Этот пользователь уже зарегистрирован"
+        "telegram_no_users" = "Нет зарегистрированных пользователей"
+        "telegram_registered_users_list" = "Зарегистрированные пользователи:"
+        "telegram_enter_number_remove" = "Введите номер для удаления"
+        "telegram_user_removed" = "Пользователь успешно удален!"
+        "telegram_not_configured" = "Уведомления Telegram не настроены"
+        "telegram_sending_test" = "Отправка тестового уведомления..."
+        "telegram_test_success" = "Успешно отправлено в {0} из {1} чатов"
+        "telegram_test_failed" = "Не удалось отправить во все чаты"
+        "telegram_failed_chats" = "Неудачные чаты:"
+        "telegram_chat_id" = "Chat ID: {0}"
+        "telegram_common_issues" = "Распространенные проблемы:"
+        "telegram_issue_not_started" = "Пользователь не начал разговор с ботом"
+        "telegram_solution_start" = "Решение: Откройте Telegram, найдите вашего бота, нажмите START"
+        "telegram_issue_blocked" = "Пользователь заблокировал бота"
+        "telegram_solution_unblock" = "Решение: Разблокируйте бота в настройках Telegram"
+        "telegram_issue_invalid_id" = "Неверный Chat ID"
+        "telegram_solution_get_id" = "Решение: Получите правильный Chat ID от @userinfobot"
+        "telegram_disabled" = "Уведомления Telegram отключены"
+        "telegram_how_to_get_id" = "Как получить ваш Telegram Chat ID"
+        "telegram_method_userinfobot" = "Метод 1: Используя @userinfobot"
+        "telegram_step_search" = "Откройте Telegram и найдите @userinfobot"
+        "telegram_step_start" = "Начните разговор и отправьте /start"
+        "telegram_step_reply" = "Бот ответит с вашим Chat ID"
+        "telegram_method_auto" = "Метод 2: Автоматическое определение"
+        "telegram_step_send_message" = "Отправьте любое сообщение вашему боту"
+        "telegram_step_detect" = "Этот инструмент определит ваш Chat ID"
+        "telegram_checking_messages" = "Проверка сообщений..."
+        "telegram_found_chats" = "Найдено {0} чат(ов):"
+        "telegram_username" = "Имя пользователя: @{0}"
+        "telegram_name" = "Имя: {0}"
+        "telegram_type" = "Тип: {0}"
+        "telegram_no_messages" = "Сообщения не найдены."
+        "telegram_send_message_prompt" = "Пожалуйста, отправьте сообщение вашему боту и попробуйте снова."
+        "telegram_error_getting_ids" = "Не удалось получить Chat ID: {0}"
     }
 }
 
@@ -304,19 +460,16 @@ function Get-Translation {
         [Parameter(Mandatory=$true)]
         [string]$Key,
         
-        [Parameter(Mandatory=$false)]
-        [string]$Param1 = "",
-        
-        [Parameter(Mandatory=$false)]
-        [string]$Param2 = ""
+        [Parameter(Mandatory=$false, ValueFromRemainingArguments=$true)]
+        [object[]]$Params
     )
     
     $lang = $script:CurrentLanguage
     
     if ($script:Translations.ContainsKey($lang) -and $script:Translations[$lang].ContainsKey($Key)) {
         $text = $script:Translations[$lang][$Key]
-        if ($Param1 -or $Param2) {
-            return $text -f $Param1, $Param2
+        if ($Params -and $Params.Count -gt 0) {
+            return $text -f $Params
         }
         return $text
     }
@@ -324,8 +477,8 @@ function Get-Translation {
     # Fallback to English
     if ($script:Translations["en"].ContainsKey($Key)) {
         $text = $script:Translations["en"][$Key]
-        if ($Param1 -or $Param2) {
-            return $text -f $Param1, $Param2
+        if ($Params -and $Params.Count -gt 0) {
+            return $text -f $Params
         }
         return $text
     }

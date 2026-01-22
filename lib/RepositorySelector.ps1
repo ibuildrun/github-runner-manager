@@ -1,4 +1,4 @@
-# Repository Selection Module
+﻿# Repository Selection Module
 
 # Load platform providers if not already loaded
 if (-not ([System.Management.Automation.PSTypeName]'IPlatformProvider').Type) {
@@ -61,13 +61,13 @@ function Show-RepositoryPage {
     $totalPages = [Math]::Ceiling($Repositories.Count / $PageSize)
     
     Write-Host ""
-    Write-Host "Page $Page of $totalPages (Total: $($Repositories.Count) repositories)" -ForegroundColor Cyan
+    Write-Host (L "repo_page_info" $Page $totalPages $Repositories.Count) -ForegroundColor Cyan
     Write-Host ""
     
     for ($i = $startIndex; $i -lt $endIndex; $i++) {
         $repo = $Repositories[$i]
         $displayIndex = $i + 1
-        $visibility = if ($repo.private) { "[Private]" } else { "[Public]" }
+        $visibility = if ($repo.private) { L "repo_visibility_private" } else { L "repo_visibility_public" }
         Write-Host "$displayIndex. $visibility $($repo.full_name)" -ForegroundColor White
         if ($repo.description) {
             Write-Host "   $($repo.description)" -ForegroundColor Gray
@@ -88,12 +88,12 @@ function Invoke-GitHubRepositorySelection {
         $Config
     )
     
-    Write-Host "Fetching your repositories..." -ForegroundColor Yellow
+    Write-Host (L "repo_fetching_repos") -ForegroundColor Yellow
     
     $repos = Get-GitHubRepositories -Token $Config.GitHubToken
     
     if ($repos.Count -eq 0) {
-        Write-Host "No repositories found" -ForegroundColor Yellow
+        Write-Host (L "repo_none_found" (L "repo_repositories")) -ForegroundColor Yellow
         return
     }
     
@@ -108,26 +108,26 @@ function Invoke-GitHubRepositorySelection {
     do {
         Clear-Host
         Write-Host "========================================" -ForegroundColor Cyan
-        Write-Host "  Repository Selection" -ForegroundColor Cyan
+        Write-Host "  $(L 'repo_selection_title' (L 'menu_repository'))" -ForegroundColor Cyan
         Write-Host "========================================" -ForegroundColor Cyan
         
         if ($searchTerm) {
-            Write-Host "Search filter: '$searchTerm'" -ForegroundColor Yellow
+            Write-Host (L "repo_search_filter" $searchTerm) -ForegroundColor Yellow
             Write-Host ""
         }
         
         $pageInfo = Show-RepositoryPage -Repositories $filtered -Page $currentPage -PageSize $pageSize
         
-        Write-Host "Commands:" -ForegroundColor Cyan
-        Write-Host "  [number] - Select repository" -ForegroundColor White
-        Write-Host "  n - Next page" -ForegroundColor White
-        Write-Host "  p - Previous page" -ForegroundColor White
-        Write-Host "  s - Search/Filter" -ForegroundColor White
-        Write-Host "  c - Clear filter" -ForegroundColor White
-        Write-Host "  q - Quit" -ForegroundColor White
+        Write-Host (L "repo_commands") -ForegroundColor Cyan
+        Write-Host "  $(L 'repo_cmd_select')" -ForegroundColor White
+        Write-Host "  $(L 'repo_cmd_next')" -ForegroundColor White
+        Write-Host "  $(L 'repo_cmd_prev')" -ForegroundColor White
+        Write-Host "  $(L 'repo_cmd_search')" -ForegroundColor White
+        Write-Host "  $(L 'repo_cmd_clear')" -ForegroundColor White
+        Write-Host "  $(L 'repo_cmd_quit')" -ForegroundColor White
         Write-Host ""
         
-        $input = Read-Host "Enter command or number"
+        $input = Read-Host (L "repo_enter_command")
         
         switch -Regex ($input) {
             '^[0-9]+$' {
@@ -137,10 +137,10 @@ function Invoke-GitHubRepositorySelection {
                     $Config.Repository = $filtered[$index].full_name
                     $Config.Save("None")
                     Write-Host ""
-                    Write-Host "Repository set to: $($Config.Repository)" -ForegroundColor Green
+                    Write-Host (L "repo_set_to" (L "menu_repository") $Config.Repository) -ForegroundColor Green
                     return
                 } else {
-                    Write-Host "Invalid selection" -ForegroundColor Red
+                    Write-Host (L "repo_invalid_selection") -ForegroundColor Red
                     Start-Sleep -Seconds 1
                 }
             }
@@ -149,7 +149,7 @@ function Invoke-GitHubRepositorySelection {
                 if ($currentPage -lt $pageInfo.TotalPages) {
                     $currentPage++
                 } else {
-                    Write-Host "Already on last page" -ForegroundColor Yellow
+                    Write-Host (L "repo_last_page") -ForegroundColor Yellow
                     Start-Sleep -Seconds 1
                 }
             }
@@ -158,14 +158,14 @@ function Invoke-GitHubRepositorySelection {
                 if ($currentPage -gt 1) {
                     $currentPage--
                 } else {
-                    Write-Host "Already on first page" -ForegroundColor Yellow
+                    Write-Host (L "repo_first_page") -ForegroundColor Yellow
                     Start-Sleep -Seconds 1
                 }
             }
             '^s$' {
                 # Search
                 Write-Host ""
-                $searchTerm = Read-Host "Enter search term (searches in name and description)"
+                $searchTerm = Read-Host (L "repo_enter_search")
                 if ($searchTerm) {
                     $filtered = $repos | Where-Object { 
                         $_.full_name -like "*$searchTerm*" -or 
@@ -173,7 +173,7 @@ function Invoke-GitHubRepositorySelection {
                     }
                     
                     if ($filtered.Count -eq 0) {
-                        Write-Host "No repositories match '$searchTerm'" -ForegroundColor Yellow
+                        Write-Host (L "repo_no_match_found" $searchTerm) -ForegroundColor Yellow
                         $filtered = $repos
                         $searchTerm = ""
                         Start-Sleep -Seconds 2
@@ -186,7 +186,7 @@ function Invoke-GitHubRepositorySelection {
                 $filtered = $repos
                 $searchTerm = ""
                 $currentPage = 1
-                Write-Host "Filter cleared" -ForegroundColor Green
+                Write-Host (L "repo_filter_cleared") -ForegroundColor Green
                 Start-Sleep -Seconds 1
             }
             '^q$' {
@@ -194,7 +194,7 @@ function Invoke-GitHubRepositorySelection {
                 return
             }
             default {
-                Write-Host "Invalid command" -ForegroundColor Red
+                Write-Host (L "repo_invalid_command") -ForegroundColor Red
                 Start-Sleep -Seconds 1
             }
         }

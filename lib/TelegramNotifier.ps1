@@ -111,11 +111,11 @@ function Test-TelegramConnection {
         $response = Invoke-RestMethod -Uri $uri -Method Get -ErrorAction Stop
         
         if ($response.ok) {
-            Write-Host "$([char]0x2713) Bot connected: @$($response.result.username)" -ForegroundColor Green
+            Write-Host "$([char]0x2713) $(L 'telegram_bot_connected' $response.result.username)" -ForegroundColor Green
             return $true
         }
     } catch {
-        Write-Host "$([char]0x2717) Failed to connect to Telegram bot: $_" -ForegroundColor Red
+        Write-Host "$([char]0x2717) $(L 'telegram_failed_connect' $_)" -ForegroundColor Red
         return $false
     }
     
@@ -129,18 +129,18 @@ function Get-TelegramChatId {
     )
     
     Write-Host ""
-    Write-Host "=== How to get your Telegram Chat ID ===" -ForegroundColor Cyan
+    Write-Host "=== $(L 'telegram_how_to_get_id') ===" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "Method 1: Using @userinfobot" -ForegroundColor Yellow
-    Write-Host "  1. Open Telegram and search for @userinfobot" -ForegroundColor White
-    Write-Host "  2. Start conversation and send /start" -ForegroundColor White
-    Write-Host "  3. Bot will reply with your Chat ID" -ForegroundColor White
+    Write-Host (L 'telegram_method_userinfobot') -ForegroundColor Yellow
+    Write-Host "  1. $(L 'telegram_step_search')" -ForegroundColor White
+    Write-Host "  2. $(L 'telegram_step_start')" -ForegroundColor White
+    Write-Host "  3. $(L 'telegram_step_reply')" -ForegroundColor White
     Write-Host ""
-    Write-Host "Method 2: Automatic detection" -ForegroundColor Yellow
-    Write-Host "  1. Send any message to your bot" -ForegroundColor White
-    Write-Host "  2. This tool will detect your Chat ID" -ForegroundColor White
+    Write-Host (L 'telegram_method_auto') -ForegroundColor Yellow
+    Write-Host "  1. $(L 'telegram_step_send_message')" -ForegroundColor White
+    Write-Host "  2. $(L 'telegram_step_detect')" -ForegroundColor White
     Write-Host ""
-    Write-Host "Checking for messages..." -ForegroundColor Cyan
+    Write-Host (L 'telegram_checking_messages') -ForegroundColor Cyan
     
     try {
         $uri = "https://api.telegram.org/bot$BotToken/getUpdates"
@@ -160,17 +160,17 @@ function Get-TelegramChatId {
             
             if ($chatIds.Count -gt 0) {
                 Write-Host ""
-                Write-Host "Found $($chatIds.Count) chat(s):" -ForegroundColor Green
+                Write-Host (L 'telegram_found_chats' $chatIds.Count) -ForegroundColor Green
                 Write-Host ""
                 foreach ($chat in $chatIds) {
-                    Write-Host "  Chat ID: $($chat.ChatId)" -ForegroundColor White
+                    Write-Host "  $(L 'telegram_chat_id' $chat.ChatId)" -ForegroundColor White
                     if ($chat.Username) {
-                        Write-Host "  Username: @$($chat.Username)" -ForegroundColor Gray
+                        Write-Host "  $(L 'telegram_username' $chat.Username)" -ForegroundColor Gray
                     }
                     if ($chat.FirstName) {
-                        Write-Host "  Name: $($chat.FirstName)" -ForegroundColor Gray
+                        Write-Host "  $(L 'telegram_name' $chat.FirstName)" -ForegroundColor Gray
                     }
-                    Write-Host "  Type: $($chat.Type)" -ForegroundColor Gray
+                    Write-Host "  $(L 'telegram_type' $chat.Type)" -ForegroundColor Gray
                     Write-Host ""
                 }
                 return $chatIds.ChatId
@@ -178,12 +178,12 @@ function Get-TelegramChatId {
         }
         
         Write-Host ""
-        Write-Host "No messages found." -ForegroundColor Yellow
-        Write-Host "Please send a message to your bot and try again." -ForegroundColor Yellow
+        Write-Host (L 'telegram_no_messages') -ForegroundColor Yellow
+        Write-Host (L 'telegram_send_message_prompt') -ForegroundColor Yellow
         return @()
     } catch {
         Write-Host ""
-        Write-Host "Failed to get chat IDs: $_" -ForegroundColor Red
+        Write-Host (L 'telegram_error_getting_ids' $_) -ForegroundColor Red
         return @()
     }
 }
@@ -195,45 +195,45 @@ function Invoke-TelegramConfiguration {
     )
     
     Write-Host ""
-    Write-Host "=== Telegram Notification Configuration ===" -ForegroundColor Cyan
+    Write-Host "=== $(L 'telegram_config_title') ===" -ForegroundColor Cyan
     Write-Host ""
     
     # Load existing config as hashtable
     $telegramConfig = $Config.GetTelegramConfig()
     
     if ($telegramConfig.Enabled) {
-        Write-Host "Current status: " -NoNewline
-        Write-Host "ENABLED" -ForegroundColor Green
-        Write-Host "Registered users: $($telegramConfig.ChatIds.Count)" -ForegroundColor Cyan
+        Write-Host "$(L 'telegram_current_status') " -NoNewline
+        Write-Host (L 'telegram_status_enabled') -ForegroundColor Green
+        Write-Host (L 'telegram_registered_users' $telegramConfig.ChatIds.Count) -ForegroundColor Cyan
         Write-Host ""
     }
     
-    Write-Host "1. Enable/Configure Telegram notifications"
-    Write-Host "2. Add user (Chat ID)"
-    Write-Host "3. Remove user"
-    Write-Host "4. Test notification"
-    Write-Host "5. Disable notifications"
-    Write-Host "0. Back"
+    Write-Host "1. $(L 'telegram_option_enable')"
+    Write-Host "2. $(L 'telegram_option_add_user')"
+    Write-Host "3. $(L 'telegram_option_remove_user')"
+    Write-Host "4. $(L 'telegram_option_test')"
+    Write-Host "5. $(L 'telegram_option_disable')"
+    Write-Host "0. $(L 'telegram_option_back')"
     Write-Host ""
     
-    $choice = Read-Host "Select option"
+    $choice = Read-Host (L 'menu_select_option')
     
     switch ($choice) {
         "1" {
             Write-Host ""
-            $botToken = Read-Host "Enter Telegram Bot Token"
+            $botToken = Read-Host (L 'telegram_enter_token')
             
             if (Test-TelegramConnection -BotToken $botToken) {
                 $telegramConfig.BotToken = $botToken
                 $telegramConfig.Enabled = $true
                 
                 Write-Host ""
-                Write-Host "Getting available chat IDs..." -ForegroundColor Cyan
+                Write-Host (L 'telegram_getting_chat_ids') -ForegroundColor Cyan
                 $availableChatIds = Get-TelegramChatId -BotToken $botToken
                 
                 if ($availableChatIds.Count -gt 0) {
-                    Write-Host "Found chat IDs: $($availableChatIds -join ', ')" -ForegroundColor Green
-                    $addAll = Read-Host "Add all found chat IDs? (y/n)"
+                    Write-Host (L 'telegram_found_chat_ids' ($availableChatIds -join ', ')) -ForegroundColor Green
+                    $addAll = Read-Host (L 'telegram_add_all_chats')
                     
                     if ($addAll -eq 'y') {
                         $telegramConfig.ChatIds = $availableChatIds
@@ -241,89 +241,89 @@ function Invoke-TelegramConfiguration {
                 }
                 
                 $Config.SaveTelegramConfig($telegramConfig)
-                Write-Host "Telegram notifications enabled!" -ForegroundColor Green
+                Write-Host (L 'telegram_enabled') -ForegroundColor Green
             }
         }
         "2" {
             if (-not $telegramConfig.Enabled) {
-                Write-Host "Please configure Telegram bot first (option 1)" -ForegroundColor Yellow
+                Write-Host (L 'telegram_configure_first') -ForegroundColor Yellow
                 return
             }
             
             Write-Host ""
-            $chatId = Read-Host "Enter Chat ID to add"
+            $chatId = Read-Host (L 'telegram_enter_chat_id')
             
             if ($telegramConfig.ChatIds -notcontains $chatId) {
                 $telegramConfig.ChatIds += $chatId
                 $Config.SaveTelegramConfig($telegramConfig)
-                Write-Host "User added successfully!" -ForegroundColor Green
+                Write-Host (L 'telegram_user_added') -ForegroundColor Green
             } else {
-                Write-Host "This user is already registered" -ForegroundColor Yellow
+                Write-Host (L 'telegram_user_exists') -ForegroundColor Yellow
             }
         }
         "3" {
             if ($telegramConfig.ChatIds.Count -eq 0) {
-                Write-Host "No users registered" -ForegroundColor Yellow
+                Write-Host (L 'telegram_no_users') -ForegroundColor Yellow
                 return
             }
             
             Write-Host ""
-            Write-Host "Registered users:"
+            Write-Host (L 'telegram_registered_users_list')
             for ($i = 0; $i -lt $telegramConfig.ChatIds.Count; $i++) {
                 Write-Host "$($i + 1). $($telegramConfig.ChatIds[$i])"
             }
             
-            $index = [int](Read-Host "Enter number to remove") - 1
+            $index = [int](Read-Host (L 'telegram_enter_number_remove')) - 1
             
             if ($index -ge 0 -and $index -lt $telegramConfig.ChatIds.Count) {
                 $removed = $telegramConfig.ChatIds[$index]
                 $telegramConfig.ChatIds = $telegramConfig.ChatIds | Where-Object { $_ -ne $removed }
                 $Config.SaveTelegramConfig($telegramConfig)
-                Write-Host "User removed successfully!" -ForegroundColor Green
+                Write-Host (L 'telegram_user_removed') -ForegroundColor Green
             }
         }
         "4" {
             if (-not $telegramConfig.Enabled) {
-                Write-Host "Telegram notifications are not configured" -ForegroundColor Yellow
+                Write-Host (L 'telegram_not_configured') -ForegroundColor Yellow
                 return
             }
             
             Write-Host ""
-            Write-Host "Sending test notification..." -ForegroundColor Cyan
+            Write-Host (L 'telegram_sending_test') -ForegroundColor Cyan
             
             $result = Send-TelegramNotification -TelegramConfig (ConvertTo-TelegramConfigObject $telegramConfig) -Message "Test notification from GitHub Runner Manager" -Type "Info" -ShowErrors
             
             Write-Host ""
             if ($result.Success) {
-                Write-Host "$([char]0x2713) Successfully sent to $($result.SuccessCount) of $($result.TotalChats) chats" -ForegroundColor Green
+                Write-Host "$([char]0x2713) $(L 'telegram_test_success' $result.SuccessCount $result.TotalChats)" -ForegroundColor Green
             } else {
-                Write-Host "$([char]0x2717) Failed to send to all chats" -ForegroundColor Red
+                Write-Host "$([char]0x2717) $(L 'telegram_test_failed')" -ForegroundColor Red
             }
             
             if ($result.FailedChats.Count -gt 0) {
                 Write-Host ""
-                Write-Host "Failed chats:" -ForegroundColor Yellow
+                Write-Host "$(L 'telegram_failed_chats')" -ForegroundColor Yellow
                 foreach ($failed in $result.FailedChats) {
-                    Write-Host "  - Chat ID: $($failed.ChatId)" -ForegroundColor Yellow
+                    Write-Host "  - $(L 'telegram_chat_id' $failed.ChatId)" -ForegroundColor Yellow
                 }
                 
                 Write-Host ""
-                Write-Host "Common issues:" -ForegroundColor Cyan
-                Write-Host "  1. User hasn't started conversation with bot" -ForegroundColor White
-                Write-Host "     Solution: Open Telegram, search for your bot, click START" -ForegroundColor Gray
+                Write-Host (L 'telegram_common_issues') -ForegroundColor Cyan
+                Write-Host "  1. $(L 'telegram_issue_not_started')" -ForegroundColor White
+                Write-Host "     $(L 'telegram_solution_start')" -ForegroundColor Gray
                 Write-Host ""
-                Write-Host "  2. User blocked the bot" -ForegroundColor White
-                Write-Host "     Solution: Unblock bot in Telegram settings" -ForegroundColor Gray
+                Write-Host "  2. $(L 'telegram_issue_blocked')" -ForegroundColor White
+                Write-Host "     $(L 'telegram_solution_unblock')" -ForegroundColor Gray
                 Write-Host ""
-                Write-Host "  3. Invalid Chat ID" -ForegroundColor White
-                Write-Host "     Solution: Get correct Chat ID from @userinfobot" -ForegroundColor Gray
+                Write-Host "  3. $(L 'telegram_issue_invalid_id')" -ForegroundColor White
+                Write-Host "     $(L 'telegram_solution_get_id')" -ForegroundColor Gray
                 Write-Host ""
             }
         }
         "5" {
             $telegramConfig.Enabled = $false
             $Config.SaveTelegramConfig($telegramConfig)
-            Write-Host "Telegram notifications disabled" -ForegroundColor Yellow
+            Write-Host (L 'telegram_disabled') -ForegroundColor Yellow
         }
     }
 }
