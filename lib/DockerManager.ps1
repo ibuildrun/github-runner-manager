@@ -693,23 +693,23 @@ function Invoke-DockerManagement {
     
     do {
         Write-Host ""
-        Write-Host "=== Docker Container Management ===" -ForegroundColor Cyan
+        Write-Host "=== $(L 'docker_menu_title') ===" -ForegroundColor Cyan
         Write-Host ""
-        Write-Host "1. Build runner image"
-        Write-Host "2. Start new runner container"
-        Write-Host "3. List running containers"
-        Write-Host "4. Stop container"
-        Write-Host "5. Remove container"
-        Write-Host "6. View container logs"
-        Write-Host "7. Bulk deploy (multiple containers)"
-        Write-Host "8. Rebuild and restart runner (auto)"
-        Write-Host "9. Restart container (quick fix)"
-        Write-Host "10. Health check"
-        Write-Host "11. Cleanup offline runners from GitHub"
-        Write-Host "0. Back"
+        Write-Host "1. $(L 'docker_option_build')"
+        Write-Host "2. $(L 'docker_option_start')"
+        Write-Host "3. $(L 'docker_option_list')"
+        Write-Host "4. $(L 'docker_option_stop')"
+        Write-Host "5. $(L 'docker_option_remove')"
+        Write-Host "6. $(L 'docker_option_logs')"
+        Write-Host "7. $(L 'docker_option_bulk')"
+        Write-Host "8. $(L 'docker_option_rebuild')"
+        Write-Host "9. $(L 'docker_option_restart')"
+        Write-Host "10. $(L 'docker_option_health')"
+        Write-Host "11. $(L 'docker_option_cleanup')"
+        Write-Host "0. $(L 'docker_option_back')"
         Write-Host ""
         
-        $choice = Read-Host "Select option"
+        $choice = Read-Host (L "menu_select_option")
         
         switch ($choice) {
             "1" {
@@ -865,7 +865,7 @@ function Invoke-DockerManagement {
         
         if ($choice -ne "0") {
             Write-Host ""
-            Read-Host "Press Enter to continue"
+            Read-Host (L "press_enter")
         }
     } while ($choice -ne "0")
 }
