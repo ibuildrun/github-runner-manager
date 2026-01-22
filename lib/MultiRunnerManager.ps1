@@ -10,16 +10,16 @@ function Show-LocalRunners {
     $runners = $Config.GetLocalRunners()
     
     Write-Host ""
-    Write-Host "=== Local Runners (Windows) ===" -ForegroundColor Cyan
+    Write-Host "=== $(L 'multirunner_local_title') ===" -ForegroundColor Cyan
     Write-Host ""
     
     if ($runners.Count -eq 0) {
-        Write-Host "No local runners configured" -ForegroundColor Yellow
+        Write-Host (L "multirunner_no_runners") -ForegroundColor Yellow
         Write-Host ""
-        Write-Host "Tip: Use option 1 to add a new runner" -ForegroundColor Gray
+        Write-Host (L "multirunner_tip") -ForegroundColor Gray
         Write-Host ""
-        Write-Host "Note: Local runners run directly on Windows." -ForegroundColor DarkGray
-        Write-Host "      Docker runners are managed separately (Main Menu → Option 16)" -ForegroundColor DarkGray
+        Write-Host (L "multirunner_note_local") -ForegroundColor DarkGray
+        Write-Host (L "multirunner_note_docker") -ForegroundColor DarkGray
         return
     }
     
@@ -37,26 +37,26 @@ function Show-LocalRunners {
         
         # Determine status
         if (-not $isInstalled) {
-            $status = "Not Installed"
+            $status = L "multirunner_status_not_installed"
             $statusColor = "Red"
             $statusIcon = "✗"
         } elseif ($isRunning) {
-            $status = "Running"
+            $status = L "multirunner_status_running"
             $statusColor = "Green"
             $statusIcon = "✓"
         } else {
-            $status = "Stopped"
+            $status = L "multirunner_status_stopped"
             $statusColor = "Yellow"
             $statusIcon = "○"
         }
         
         Write-Host "$prefix Runner: $($runner.Name)" -ForegroundColor $(if ($isActive) { "Green" } else { "White" })
-        Write-Host "        Type: Local (Windows)" -ForegroundColor Cyan
-        Write-Host "        ID: $($runner.Id)" -ForegroundColor Gray
-        Write-Host "        Repository: $($runner.Repository)" -ForegroundColor Gray
-        Write-Host "        Path: $($runner.Path)" -ForegroundColor Gray
-        Write-Host "        Platform: $($runner.Platform)" -ForegroundColor Gray
-        Write-Host "        Status: $statusIcon $status" -ForegroundColor $statusColor
+        Write-Host "        $(L 'multirunner_type'): $(L 'multirunner_type_local')" -ForegroundColor Cyan
+        Write-Host "        $(L 'multirunner_id'): $($runner.Id)" -ForegroundColor Gray
+        Write-Host "        $(L 'multirunner_repository'): $($runner.Repository)" -ForegroundColor Gray
+        Write-Host "        $(L 'multirunner_path'): $($runner.Path)" -ForegroundColor Gray
+        Write-Host "        $(L 'multirunner_platform'): $($runner.Platform)" -ForegroundColor Gray
+        Write-Host "        $(L 'multirunner_status'): $statusIcon $status" -ForegroundColor $statusColor
         
         if ($isInstalled -and $isRunning) {
             # Try to get process info
@@ -69,16 +69,16 @@ function Show-LocalRunners {
             } | Select-Object -First 1
             
             if ($process) {
-                Write-Host "        PID: $($process.Id)" -ForegroundColor DarkGray
+                Write-Host "        $(L 'multirunner_pid'): $($process.Id)" -ForegroundColor DarkGray
                 $uptime = (Get-Date) - $process.StartTime
-                Write-Host "        Uptime: $($uptime.Days)d $($uptime.Hours)h $($uptime.Minutes)m" -ForegroundColor DarkGray
+                Write-Host "        $(L 'multirunner_uptime'): $($uptime.Days)d $($uptime.Hours)h $($uptime.Minutes)m" -ForegroundColor DarkGray
             }
         }
         
         Write-Host ""
     }
     
-    Write-Host "Docker Runners: Managed separately (Main Menu → Option 16)" -ForegroundColor DarkGray
+    Write-Host (L "multirunner_docker_note") -ForegroundColor DarkGray
     Write-Host ""
 }
 
@@ -332,19 +332,19 @@ function Invoke-MultiRunnerMenu {
         Show-Banner
         
         Write-Host ""
-        Write-Host "=== Multi-Runner Management ===" -ForegroundColor Cyan
+        Write-Host "=== $(L 'multirunner_title') ===" -ForegroundColor Cyan
         Write-Host ""
         
         Show-LocalRunners -Config $Config
         
-        Write-Host "1. Add new runner" -ForegroundColor White
-        Write-Host "2. Select active runner" -ForegroundColor White
-        Write-Host "3. Remove runner" -ForegroundColor White
+        Write-Host "1. $(L 'multirunner_option_add')" -ForegroundColor White
+        Write-Host "2. $(L 'multirunner_option_select')" -ForegroundColor White
+        Write-Host "3. $(L 'multirunner_option_remove')" -ForegroundColor White
         Write-Host ""
-        Write-Host "0. Back to main menu" -ForegroundColor Gray
+        Write-Host "0. $(L 'multirunner_option_back')" -ForegroundColor Gray
         Write-Host ""
         
-        $choice = Read-Host "Select option"
+        $choice = Read-Host (L "menu_select_option")
         
         switch ($choice) {
             "1" { Add-LocalRunner -Config $Config }
@@ -352,13 +352,13 @@ function Invoke-MultiRunnerMenu {
             "3" { Remove-LocalRunnerInteractive -Config $Config }
             "0" { break }
             default { 
-                Write-Host "Invalid option" -ForegroundColor Red 
+                Write-Host (L "invalid_option") -ForegroundColor Red 
             }
         }
         
         if ($choice -ne "0") {
             Write-Host ""
-            Read-Host "Press Enter to continue"
+            Read-Host (L "press_enter")
         }
     } while ($choice -ne "0")
 }
