@@ -1,6 +1,7 @@
-# GitHub Secrets Management Module
+﻿# GitHub Secrets Management Module
 
 . "$PSScriptRoot\GitHub.ps1"
+. "$PSScriptRoot\Localization.ps1"
 
 function Test-SSHConnection {
     param(
@@ -15,7 +16,7 @@ function Test-SSHConnection {
     )
     
     Write-Host ""
-    Write-Host "Testing SSH connection to ${UserName}@${HostName}:${Port}..." -ForegroundColor Yellow
+    Write-Host (L "secrets_testing_ssh" $UserName $HostName $Port) -ForegroundColor Yellow
     
     try {
         # First, check if port is accessible
@@ -23,19 +24,19 @@ function Test-SSHConnection {
         try {
             $testSocket.Connect($HostName, $Port)
             $testSocket.Close()
-            Write-Host "$([char]0x2713) SSH port is accessible" -ForegroundColor Green
+            Write-Host "$([char]0x2713) $(L 'secrets_ssh_port_ok')" -ForegroundColor Green
         } catch {
-            Write-Host "$([char]0x2717) Cannot connect to SSH server" -ForegroundColor Red
-            Write-Host "Please check:" -ForegroundColor Yellow
-            Write-Host "  - Host IP/hostname is correct: $HostName" -ForegroundColor Gray
-            Write-Host "  - Port is correct: $Port" -ForegroundColor Gray
-            Write-Host "  - SSH server is running" -ForegroundColor Gray
-            Write-Host "  - Firewall allows connections" -ForegroundColor Gray
+            Write-Host "$([char]0x2717) $(L 'secrets_ssh_port_fail')" -ForegroundColor Red
+            Write-Host (L "secrets_check_list") -ForegroundColor Yellow
+            Write-Host "  - $(L 'secrets_check_host' $HostName)" -ForegroundColor Gray
+            Write-Host "  - $(L 'secrets_check_port' $Port)" -ForegroundColor Gray
+            Write-Host "  - $(L 'secrets_check_server')" -ForegroundColor Gray
+            Write-Host "  - $(L 'secrets_check_firewall')" -ForegroundColor Gray
             return $false
         }
         
         # Check if SSH keys are already configured
-        Write-Host "Checking for existing SSH keys..." -ForegroundColor Yellow
+        Write-Host (L "secrets_checking_keys") -ForegroundColor Yellow
         $sshDir = "$env:USERPROFILE\.ssh"
         $knownHostsFile = "$sshDir\known_hosts"
         
@@ -44,42 +45,42 @@ function Test-SSHConnection {
         $result = cmd /c $testCommand
         
         if ($LASTEXITCODE -eq 0 -or $result -match "test") {
-            Write-Host "$([char]0x2713) SSH connection successful (using existing keys)" -ForegroundColor Green
+            Write-Host "$([char]0x2713) $(L 'secrets_ssh_success_keys')" -ForegroundColor Green
             Write-Host ""
-            Write-Host "Note: You already have SSH keys configured for this server" -ForegroundColor Cyan
-            Write-Host "Password authentication may not be needed" -ForegroundColor Cyan
+            Write-Host (L "secrets_note_keys_exist") -ForegroundColor Cyan
+            Write-Host (L "secrets_password_not_needed") -ForegroundColor Cyan
             return $true
         }
         
         Write-Host ""
-        Write-Host "Automated password testing is not reliable on Windows" -ForegroundColor Yellow
+        Write-Host (L "secrets_auto_test_unreliable") -ForegroundColor Yellow
         Write-Host ""
-        Write-Host "Please verify manually:" -ForegroundColor Cyan
-        Write-Host "  Run this command: ssh ${UserName}@${HostName}" -ForegroundColor White
+        Write-Host (L "secrets_verify_manually") -ForegroundColor Cyan
+        Write-Host "  $(L 'secrets_run_command' $UserName $HostName)" -ForegroundColor White
         Write-Host ""
         
-        $manualTest = Read-Host "Can you connect manually with this command? (y/N)"
+        $manualTest = Read-Host (L "secrets_can_connect")
         
         if ($manualTest -eq "y" -or $manualTest -eq "Y") {
-            Write-Host "$([char]0x2713) Manual verification successful" -ForegroundColor Green
-            Write-Host "Credentials will be saved to GitHub Secrets" -ForegroundColor Cyan
+            Write-Host "$([char]0x2713) $(L 'secrets_manual_verify_ok')" -ForegroundColor Green
+            Write-Host (L "secrets_creds_saved") -ForegroundColor Cyan
             return $true
         } else {
-            Write-Host "$([char]0x2717) Please verify your credentials" -ForegroundColor Red
+            Write-Host "$([char]0x2717) $(L 'secrets_verify_creds')" -ForegroundColor Red
             Write-Host ""
-            Write-Host "Check:" -ForegroundColor Yellow
-            Write-Host "  - Host: $HostName" -ForegroundColor Gray
-            Write-Host "  - Port: $Port" -ForegroundColor Gray
-            Write-Host "  - Username: $UserName" -ForegroundColor Gray
-            Write-Host "  - Password: (hidden)" -ForegroundColor Gray
+            Write-Host (L "secrets_check") -ForegroundColor Yellow
+            Write-Host "  - $(L 'secrets_host' $HostName)" -ForegroundColor Gray
+            Write-Host "  - $(L 'secrets_port' $Port)" -ForegroundColor Gray
+            Write-Host "  - $(L 'secrets_username' $UserName)" -ForegroundColor Gray
+            Write-Host "  - $(L 'secrets_password_hidden')" -ForegroundColor Gray
             return $false
         }
         
     } catch {
-        Write-Host "$([char]0x2717) Error testing connection: $_" -ForegroundColor Red
+        Write-Host "$([char]0x2717) $(L 'secrets_error_testing' $_)" -ForegroundColor Red
         Write-Host ""
-        Write-Host "Note: Automated SSH testing is limited on Windows" -ForegroundColor Yellow
-        Write-Host "If you can connect manually with 'ssh ${UserName}@${HostName}', the credentials are correct" -ForegroundColor Cyan
+        Write-Host (L "secrets_note_limited") -ForegroundColor Yellow
+        Write-Host (L "secrets_if_manual_ok" $UserName $HostName) -ForegroundColor Cyan
         return $false
     }
 }
@@ -99,7 +100,7 @@ function Setup-SSHKeys {
     )
     
     Write-Host ""
-    Write-Host "=== SSH Key Setup ===" -ForegroundColor Cyan
+    Write-Host (L "secrets_ssh_setup_title") -ForegroundColor Cyan
     
     $sshDir = "$env:USERPROFILE\.ssh"
     $keyPath = "$sshDir\github_runner_key"
@@ -112,17 +113,17 @@ function Setup-SSHKeys {
     
     # Generate SSH key if not exists
     if (-not (Test-Path $keyPath)) {
-        Write-Host "Generating SSH key pair..." -ForegroundColor Yellow
+        Write-Host (L "secrets_generating_key") -ForegroundColor Yellow
         ssh-keygen -t rsa -b 4096 -f $keyPath -N '""' -C "github-runner@$env:COMPUTERNAME" 2>&1 | Out-Null
         
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "$([char]0x2713) SSH key pair generated" -ForegroundColor Green
+            Write-Host "$([char]0x2713) $(L 'secrets_key_generated')" -ForegroundColor Green
         } else {
-            Write-Host "$([char]0x2717) Failed to generate SSH key" -ForegroundColor Red
+            Write-Host "$([char]0x2717) $(L 'secrets_key_gen_failed')" -ForegroundColor Red
             return
         }
     } else {
-        Write-Host "Using existing SSH key: $keyPath" -ForegroundColor Cyan
+        Write-Host (L "secrets_using_existing" $keyPath) -ForegroundColor Cyan
     }
     
     # Read public key
@@ -130,7 +131,7 @@ function Setup-SSHKeys {
         $publicKey = Get-Content $pubKeyPath -Raw
         
         Write-Host ""
-        Write-Host "Copying public key to server..." -ForegroundColor Yellow
+        Write-Host (L "secrets_copying_key") -ForegroundColor Yellow
         
         # Create script to copy key
         $copyScript = @"
@@ -158,50 +159,50 @@ exit 1
         Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
         
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "$([char]0x2713) Public key copied to server" -ForegroundColor Green
+            Write-Host "$([char]0x2713) $(L 'secrets_key_copied')" -ForegroundColor Green
             
             # Read private key and save to GitHub secret
             Write-Host ""
-            Write-Host "Saving private key to GitHub secret..." -ForegroundColor Yellow
+            Write-Host (L "secrets_saving_private") -ForegroundColor Yellow
             $privateKey = Get-Content $keyPath -Raw
             
             if (Set-GitHubSecretViaCLI -Repository $Repository -SecretName "SSH_PRIVATE_KEY" -SecretValue $privateKey) {
-                Write-Host "$([char]0x2713) SSH_PRIVATE_KEY configured" -ForegroundColor Green
+                Write-Host "$([char]0x2713) $(L 'secrets_private_key_ok')" -ForegroundColor Green
                 Write-Host ""
-                Write-Host "SSH key setup complete!" -ForegroundColor Green
-                Write-Host "You can now use passwordless SSH authentication" -ForegroundColor Cyan
+                Write-Host (L "secrets_setup_complete") -ForegroundColor Green
+                Write-Host (L "secrets_passwordless") -ForegroundColor Cyan
                 Write-Host ""
-                Write-Host "Note: You may want to remove SSH_PASSWORD secret if using keys only" -ForegroundColor Yellow
+                Write-Host (L "secrets_note_remove_pass") -ForegroundColor Yellow
             } else {
-                Write-Host "$([char]0x2717) Failed to save private key to GitHub" -ForegroundColor Red
+                Write-Host "$([char]0x2717) $(L 'secrets_key_gen_failed')" -ForegroundColor Red
             }
         } else {
-            Write-Host "$([char]0x2717) Failed to copy public key to server" -ForegroundColor Red
-            Write-Host "You can manually copy the key:" -ForegroundColor Yellow
+            Write-Host "$([char]0x2717) $(L 'secrets_key_copy_failed')" -ForegroundColor Red
+            Write-Host (L "secrets_manual_copy") -ForegroundColor Yellow
             Write-Host ""
-            Write-Host "Public key location: $pubKeyPath" -ForegroundColor Cyan
+            Write-Host (L "secrets_pubkey_location" $pubKeyPath) -ForegroundColor Cyan
             Write-Host ""
-            Write-Host "On the server, run:" -ForegroundColor Yellow
+            Write-Host (L "secrets_on_server_run") -ForegroundColor Yellow
             Write-Host "  mkdir -p ~/.ssh" -ForegroundColor Gray
             Write-Host "  echo '$publicKey' >> ~/.ssh/authorized_keys" -ForegroundColor Gray
             Write-Host "  chmod 600 ~/.ssh/authorized_keys" -ForegroundColor Gray
         }
     } else {
-        Write-Host "$([char]0x2717) Public key file not found" -ForegroundColor Red
+        Write-Host "$([char]0x2717) $(L 'secrets_pubkey_not_found')" -ForegroundColor Red
     }
 }
 
 function Get-TelegramChatId {
     Write-Host ""
-    Write-Host "=== How to get Telegram Chat ID ===" -ForegroundColor Cyan
+    Write-Host (L "secrets_chatid_title") -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "1. Open @userinfobot in Telegram" -ForegroundColor Yellow
-    Write-Host "2. Send /start command" -ForegroundColor Yellow
-    Write-Host "3. Copy your ID (number, e.g.: 123456789)" -ForegroundColor Yellow
+    Write-Host (L "secrets_chatid_step1") -ForegroundColor Yellow
+    Write-Host (L "secrets_chatid_step2") -ForegroundColor Yellow
+    Write-Host (L "secrets_chatid_step3") -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "Or for a group:" -ForegroundColor Gray
-    Write-Host "1. Add @userinfobot to the group" -ForegroundColor Yellow
-    Write-Host "2. Group ID starts with minus (e.g.: -100123456789)" -ForegroundColor Yellow
+    Write-Host (L "secrets_chatid_group") -ForegroundColor Gray
+    Write-Host (L "secrets_chatid_group1") -ForegroundColor Yellow
+    Write-Host (L "secrets_chatid_group2") -ForegroundColor Yellow
     Write-Host ""
 }
 
@@ -216,38 +217,38 @@ function Test-GitHubCLI {
 
 function Install-GitHubCLI {
     Write-Host ""
-    Write-Host "GitHub CLI (gh) is not installed" -ForegroundColor Yellow
+    Write-Host (L "secrets_gh_not_installed") -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "GitHub CLI is required for automatic secrets configuration." -ForegroundColor Gray
-    Write-Host "Install now? (requires winget)" -ForegroundColor Yellow
+    Write-Host (L "secrets_gh_required") -ForegroundColor Gray
+    Write-Host (L "secrets_install_now") -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "1. Yes, install via winget" -ForegroundColor White
-    Write-Host "2. No, I'll install manually" -ForegroundColor White
-    Write-Host "3. Cancel" -ForegroundColor White
+    Write-Host (L "secrets_install_yes") -ForegroundColor White
+    Write-Host (L "secrets_install_manual") -ForegroundColor White
+    Write-Host (L "secrets_install_cancel") -ForegroundColor White
     Write-Host ""
     
-    $choice = Read-Host "Select option (1-3)"
+    $choice = Read-Host (L "secrets_select_option")
     
     switch ($choice) {
         "1" {
             Write-Host ""
-            Write-Host "Installing GitHub CLI..." -ForegroundColor Yellow
+            Write-Host (L "secrets_installing_gh") -ForegroundColor Yellow
             try {
                 winget install --id GitHub.cli --silent
-                Write-Host "$([char]0x2713) GitHub CLI installed" -ForegroundColor Green
-                Write-Host "Restart the script to apply changes" -ForegroundColor Yellow
+                Write-Host "$([char]0x2713) $(L 'secrets_gh_installed')" -ForegroundColor Green
+                Write-Host (L "secrets_restart_script") -ForegroundColor Yellow
                 return $false
             } catch {
-                Write-Host "$([char]0x2717) Installation error: $_" -ForegroundColor Red
+                Write-Host "$([char]0x2717) $(L 'secrets_install_error' $_)" -ForegroundColor Red
                 return $false
             }
         }
         "2" {
             Write-Host ""
-            Write-Host "Install GitHub CLI manually:" -ForegroundColor Yellow
+            Write-Host (L "secrets_install_manual_msg") -ForegroundColor Yellow
             Write-Host "https://cli.github.com/" -ForegroundColor Cyan
             Write-Host ""
-            Write-Host "Or via winget:" -ForegroundColor Gray
+            Write-Host (L "secrets_or_via_winget") -ForegroundColor Gray
             Write-Host "  winget install --id GitHub.cli" -ForegroundColor White
             Write-Host ""
             return $false
@@ -290,7 +291,7 @@ function Initialize-GitHubCLI {
         [string]$Token
     )
     
-    Write-Host "Authenticating with GitHub CLI..." -ForegroundColor Yellow
+    Write-Host (L "secrets_authenticating") -ForegroundColor Yellow
     
     try {
         # Temporarily remove GITHUB_TOKEN environment variable to avoid conflicts
@@ -302,10 +303,10 @@ function Initialize-GitHubCLI {
             $Token | gh auth login --with-token 2>&1 | Out-Null
             
             if ($LASTEXITCODE -eq 0) {
-                Write-Host "$([char]0x2713) Authentication successful" -ForegroundColor Green
+                Write-Host "$([char]0x2713) $(L 'secrets_auth_success')" -ForegroundColor Green
                 return $true
             } else {
-                Write-Host "$([char]0x2717) Authentication failed" -ForegroundColor Red
+                Write-Host "$([char]0x2717) $(L 'secrets_auth_failed')" -ForegroundColor Red
                 return $false
             }
         } finally {
@@ -313,7 +314,7 @@ function Initialize-GitHubCLI {
             $env:GITHUB_TOKEN = $originalToken
         }
     } catch {
-        Write-Host "$([char]0x2717) Error: $_" -ForegroundColor Red
+        Write-Host "$([char]0x2717) $(L 'secrets_error' $_)" -ForegroundColor Red
         return $false
     }
 }
@@ -326,8 +327,8 @@ function Invoke-SecretsConfiguration {
     
     if (-not $Config.IsValid()) {
         Write-Host ""
-        Write-Host "Error: Configure GitHub token and repository first" -ForegroundColor Red
-        Write-Host "Complete options 1 and 2 from the main menu" -ForegroundColor Yellow
+        Write-Host (L "secrets_error_config_first") -ForegroundColor Red
+        Write-Host (L "secrets_complete_options") -ForegroundColor Yellow
         return
     }
     
@@ -341,28 +342,28 @@ function Invoke-SecretsConfiguration {
     # Initialize gh CLI with token
     if (-not (Initialize-GitHubCLI -Token $Config.GitHubToken)) {
         Write-Host ""
-        Write-Host "Failed to authenticate with GitHub CLI" -ForegroundColor Red
-        Write-Host "Check your token and try again" -ForegroundColor Yellow
+        Write-Host (L "secrets_gh_auth_failed") -ForegroundColor Red
+        Write-Host (L "secrets_check_token") -ForegroundColor Yellow
         return
     }
     
     Write-Host ""
-    Write-Host "=== GitHub Secrets Configuration ===" -ForegroundColor Cyan
+    Write-Host (L "secrets_config_title") -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "Repository: $($Config.Repository)" -ForegroundColor Green
+    Write-Host (L "secrets_repository" $Config.Repository) -ForegroundColor Green
     Write-Host ""
-    Write-Host "The following secrets will be configured:" -ForegroundColor Yellow
-    Write-Host "  1. SSH_HOST - server IP address" -ForegroundColor Gray
-    Write-Host "  2. SSH_PORT - SSH port (default: 22)" -ForegroundColor Gray
-    Write-Host "  3. SSH_USER - SSH username" -ForegroundColor Gray
-    Write-Host "  4. SSH_PASSWORD - SSH password" -ForegroundColor Gray
-    Write-Host "  5. TELEGRAM_BOT_TOKEN - Telegram bot token" -ForegroundColor Gray
-    Write-Host "  6. TELEGRAM_ADMIN_CHAT_ID - your Telegram Chat ID" -ForegroundColor Gray
+    Write-Host (L "secrets_will_configure") -ForegroundColor Yellow
+    Write-Host "  $(L 'secrets_ssh_host_desc')" -ForegroundColor Gray
+    Write-Host "  $(L 'secrets_ssh_port_desc')" -ForegroundColor Gray
+    Write-Host "  $(L 'secrets_ssh_user_desc')" -ForegroundColor Gray
+    Write-Host "  $(L 'secrets_ssh_pass_desc')" -ForegroundColor Gray
+    Write-Host "  $(L 'secrets_tg_token_desc')" -ForegroundColor Gray
+    Write-Host "  $(L 'secrets_tg_chat_desc')" -ForegroundColor Gray
     Write-Host ""
     
-    $confirm = Read-Host "Continue? (y/N)"
+    $confirm = Read-Host (L "secrets_continue")
     if ($confirm -ne "y" -and $confirm -ne "Y") {
-        Write-Host "Cancelled" -ForegroundColor Yellow
+        Write-Host (L "secrets_cancelled") -ForegroundColor Yellow
         return
     }
     
@@ -370,66 +371,66 @@ function Invoke-SecretsConfiguration {
     
     # 1. SSH_HOST
     Write-Host ""
-    Write-Host "[1/6] SSH_HOST" -ForegroundColor Cyan
-    Write-Host "Enter server IP address or hostname" -ForegroundColor Yellow
-    Write-Host "Example: 192.168.1.100 or server.example.com" -ForegroundColor Gray
-    $sshHost = Read-Host "Host"
+    Write-Host (L "secrets_step_ssh_host") -ForegroundColor Cyan
+    Write-Host (L "secrets_enter_host") -ForegroundColor Yellow
+    Write-Host (L "secrets_example_host") -ForegroundColor Gray
+    $sshHost = Read-Host (L "secrets_host_label")
     
     if ([string]::IsNullOrEmpty($sshHost)) {
-        Write-Host "Skipped" -ForegroundColor Yellow
+        Write-Host (L "secrets_skipped") -ForegroundColor Yellow
     } else {
-        Write-Host "Saving SSH_HOST..." -ForegroundColor Yellow
+        Write-Host (L "secrets_saving" "SSH_HOST") -ForegroundColor Yellow
         if (Set-GitHubSecretViaCLI -Repository $Config.Repository -SecretName "SSH_HOST" -SecretValue $sshHost) {
-            Write-Host "$([char]0x2713) SSH_HOST configured" -ForegroundColor Green
+            Write-Host "$([char]0x2713) $(L 'secrets_configured' 'SSH_HOST')" -ForegroundColor Green
             $secretsConfigured++
         }
     }
     
     # 2. SSH_PORT
     Write-Host ""
-    Write-Host "[2/6] SSH_PORT" -ForegroundColor Cyan
-    Write-Host "Enter SSH port (press Enter for default 22)" -ForegroundColor Yellow
-    $sshPort = Read-Host "Port"
+    Write-Host (L "secrets_step_ssh_port") -ForegroundColor Cyan
+    Write-Host (L "secrets_enter_port") -ForegroundColor Yellow
+    $sshPort = Read-Host (L "secrets_port_label")
     
     if ([string]::IsNullOrEmpty($sshPort)) {
         $sshPort = "22"
     }
     
-    Write-Host "Saving SSH_PORT..." -ForegroundColor Yellow
+    Write-Host (L "secrets_saving" "SSH_PORT") -ForegroundColor Yellow
     if (Set-GitHubSecretViaCLI -Repository $Config.Repository -SecretName "SSH_PORT" -SecretValue $sshPort) {
-        Write-Host "$([char]0x2713) SSH_PORT configured" -ForegroundColor Green
+        Write-Host "$([char]0x2713) $(L 'secrets_configured' 'SSH_PORT')" -ForegroundColor Green
         $secretsConfigured++
     }
     
     # 3. SSH_USER
     Write-Host ""
-    Write-Host "[3/6] SSH_USER" -ForegroundColor Cyan
-    Write-Host "Enter SSH username" -ForegroundColor Yellow
-    Write-Host "Example: root, ubuntu, admin" -ForegroundColor Gray
-    $sshUser = Read-Host "Username"
+    Write-Host (L "secrets_step_ssh_user") -ForegroundColor Cyan
+    Write-Host (L "secrets_enter_user") -ForegroundColor Yellow
+    Write-Host (L "secrets_example_user") -ForegroundColor Gray
+    $sshUser = Read-Host (L "secrets_user_label")
     
     if ([string]::IsNullOrEmpty($sshUser)) {
-        Write-Host "Skipped" -ForegroundColor Yellow
+        Write-Host (L "secrets_skipped") -ForegroundColor Yellow
     } else {
-        Write-Host "Saving SSH_USER..." -ForegroundColor Yellow
+        Write-Host (L "secrets_saving" "SSH_USER") -ForegroundColor Yellow
         if (Set-GitHubSecretViaCLI -Repository $Config.Repository -SecretName "SSH_USER" -SecretValue $sshUser) {
-            Write-Host "$([char]0x2713) SSH_USER configured" -ForegroundColor Green
+            Write-Host "$([char]0x2713) $(L 'secrets_configured' 'SSH_USER')" -ForegroundColor Green
             $secretsConfigured++
         }
     }
     
     # 4. SSH_PASSWORD
     Write-Host ""
-    Write-Host "[4/6] SSH_PASSWORD" -ForegroundColor Cyan
-    Write-Host "Enter SSH password" -ForegroundColor Yellow
-    $sshPassword = Read-Host "Password" -MaskInput
+    Write-Host (L "secrets_step_ssh_pass") -ForegroundColor Cyan
+    Write-Host (L "secrets_enter_pass") -ForegroundColor Yellow
+    $sshPassword = Read-Host (L "secrets_pass_label") -MaskInput
     
     if ([string]::IsNullOrEmpty($sshPassword)) {
-        Write-Host "Skipped" -ForegroundColor Yellow
+        Write-Host (L "secrets_skipped") -ForegroundColor Yellow
     } else {
-        Write-Host "Saving SSH_PASSWORD..." -ForegroundColor Yellow
+        Write-Host (L "secrets_saving" "SSH_PASSWORD") -ForegroundColor Yellow
         if (Set-GitHubSecretViaCLI -Repository $Config.Repository -SecretName "SSH_PASSWORD" -SecretValue $sshPassword) {
-            Write-Host "$([char]0x2713) SSH_PASSWORD configured" -ForegroundColor Green
+            Write-Host "$([char]0x2713) $(L 'secrets_configured' 'SSH_PASSWORD')" -ForegroundColor Green
             $secretsConfigured++
         }
     }
@@ -437,21 +438,21 @@ function Invoke-SecretsConfiguration {
     # Test SSH connection if all SSH parameters provided
     if (-not [string]::IsNullOrEmpty($sshHost) -and -not [string]::IsNullOrEmpty($sshUser) -and -not [string]::IsNullOrEmpty($sshPassword)) {
         Write-Host ""
-        Write-Host "=== SSH Connection Test ===" -ForegroundColor Cyan
-        $testConnection = Read-Host "Test SSH connection now? (y/N)"
+        Write-Host (L "secrets_test_title") -ForegroundColor Cyan
+        $testConnection = Read-Host (L "secrets_test_now")
         
         if ($testConnection -eq "y" -or $testConnection -eq "Y") {
             if (Test-SSHConnection -HostName $sshHost -Port $sshPort -UserName $sshUser -Password $sshPassword) {
                 Write-Host ""
-                Write-Host "=== SSH Key Setup ===" -ForegroundColor Cyan
-                Write-Host "Would you like to set up passwordless SSH access using SSH keys?" -ForegroundColor Yellow
-                Write-Host "This will:" -ForegroundColor Gray
-                Write-Host "  1. Generate SSH key pair (if not exists)" -ForegroundColor Gray
-                Write-Host "  2. Copy public key to server" -ForegroundColor Gray
-                Write-Host "  3. Configure SSH_PRIVATE_KEY secret for GitHub Actions" -ForegroundColor Gray
+                Write-Host (L "secrets_setup_keys_title") -ForegroundColor Cyan
+                Write-Host (L "secrets_setup_keys_question") -ForegroundColor Yellow
+                Write-Host (L "secrets_setup_keys_will") -ForegroundColor Gray
+                Write-Host "  $(L 'secrets_setup_keys_step1')" -ForegroundColor Gray
+                Write-Host "  $(L 'secrets_setup_keys_step2')" -ForegroundColor Gray
+                Write-Host "  $(L 'secrets_setup_keys_step3')" -ForegroundColor Gray
                 Write-Host ""
                 
-                $setupKeys = Read-Host "Setup SSH keys? (y/N)"
+                $setupKeys = Read-Host (L "secrets_setup_keys_confirm")
                 if ($setupKeys -eq "y" -or $setupKeys -eq "Y") {
                     Setup-SSHKeys -HostName $sshHost -Port $sshPort -UserName $sshUser -Password $sshPassword -Repository $Config.Repository
                 }
@@ -461,33 +462,33 @@ function Invoke-SecretsConfiguration {
     
     # 5. TELEGRAM_BOT_TOKEN
     Write-Host ""
-    Write-Host "[5/6] TELEGRAM_BOT_TOKEN" -ForegroundColor Cyan
-    Write-Host "Enter Telegram bot token (get from @BotFather)" -ForegroundColor Yellow
-    Write-Host "Format: 1234567890:ABCdefGHIjklMNOpqrsTUVwxyz" -ForegroundColor Gray
-    $botToken = Read-Host "Token" -MaskInput
+    Write-Host (L "secrets_step_tg_token") -ForegroundColor Cyan
+    Write-Host (L "secrets_enter_tg_token") -ForegroundColor Yellow
+    Write-Host (L "secrets_tg_token_format") -ForegroundColor Gray
+    $botToken = Read-Host (L "secrets_token_label") -MaskInput
     
     if ([string]::IsNullOrEmpty($botToken)) {
-        Write-Host "Skipped" -ForegroundColor Yellow
+        Write-Host (L "secrets_skipped") -ForegroundColor Yellow
     } else {
-        Write-Host "Saving TELEGRAM_BOT_TOKEN..." -ForegroundColor Yellow
+        Write-Host (L "secrets_saving" "TELEGRAM_BOT_TOKEN") -ForegroundColor Yellow
         if (Set-GitHubSecretViaCLI -Repository $Config.Repository -SecretName "TELEGRAM_BOT_TOKEN" -SecretValue $botToken) {
-            Write-Host "$([char]0x2713) TELEGRAM_BOT_TOKEN configured" -ForegroundColor Green
+            Write-Host "$([char]0x2713) $(L 'secrets_configured' 'TELEGRAM_BOT_TOKEN')" -ForegroundColor Green
             $secretsConfigured++
         }
     }
     
     # 6. TELEGRAM_ADMIN_CHAT_ID
     Write-Host ""
-    Write-Host "[6/6] TELEGRAM_ADMIN_CHAT_ID" -ForegroundColor Cyan
+    Write-Host (L "secrets_step_tg_chat") -ForegroundColor Cyan
     Get-TelegramChatId
-    $chatId = Read-Host "Chat ID"
+    $chatId = Read-Host (L "secrets_chat_label")
     
     if ([string]::IsNullOrEmpty($chatId)) {
-        Write-Host "Skipped" -ForegroundColor Yellow
+        Write-Host (L "secrets_skipped") -ForegroundColor Yellow
     } else {
-        Write-Host "Saving TELEGRAM_ADMIN_CHAT_ID..." -ForegroundColor Yellow
+        Write-Host (L "secrets_saving" "TELEGRAM_ADMIN_CHAT_ID") -ForegroundColor Yellow
         if (Set-GitHubSecretViaCLI -Repository $Config.Repository -SecretName "TELEGRAM_ADMIN_CHAT_ID" -SecretValue $chatId) {
-            Write-Host "$([char]0x2713) TELEGRAM_ADMIN_CHAT_ID configured" -ForegroundColor Green
+            Write-Host "$([char]0x2713) $(L 'secrets_configured' 'TELEGRAM_ADMIN_CHAT_ID')" -ForegroundColor Green
             $secretsConfigured++
         }
     }
@@ -495,13 +496,13 @@ function Invoke-SecretsConfiguration {
     # Summary
     Write-Host ""
     Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "Configuration complete!" -ForegroundColor Green
-    Write-Host "Configured secrets: $secretsConfigured/6" -ForegroundColor Cyan
+    Write-Host (L "secrets_summary_title") -ForegroundColor Green
+    Write-Host (L "secrets_summary_count" $secretsConfigured) -ForegroundColor Cyan
     Write-Host ""
     
     if ($secretsConfigured -gt 0) {
-        Write-Host "Secrets are now available in GitHub Actions workflows" -ForegroundColor Green
-        Write-Host "Repository: https://github.com/$($Config.Repository)/settings/secrets/actions" -ForegroundColor Cyan
+        Write-Host (L "secrets_available_in_actions") -ForegroundColor Green
+        Write-Host (L "secrets_repo_url" $Config.Repository) -ForegroundColor Cyan
     }
 }
 
@@ -513,19 +514,19 @@ function Show-ConfiguredSecrets {
     
     if (-not $Config.IsValid()) {
         Write-Host ""
-        Write-Host "Error: Configure GitHub token and repository first" -ForegroundColor Red
+        Write-Host (L "secrets_error_config_first") -ForegroundColor Red
         return
     }
     
     if (-not (Test-GitHubCLI)) {
         Write-Host ""
-        Write-Host "GitHub CLI is not installed" -ForegroundColor Red
+        Write-Host (L "secrets_gh_not_installed") -ForegroundColor Red
         return
     }
     
     Write-Host ""
-    Write-Host "=== Configured Secrets ===" -ForegroundColor Cyan
-    Write-Host "Repository: $($Config.Repository)" -ForegroundColor Green
+    Write-Host (L "secrets_list_title") -ForegroundColor Cyan
+    Write-Host (L "secrets_repository" $Config.Repository) -ForegroundColor Green
     Write-Host ""
     
     try {
@@ -541,21 +542,21 @@ function Show-ConfiguredSecrets {
             "TELEGRAM_ADMIN_CHAT_ID"
         )
         
-        Write-Host "Required secrets status:" -ForegroundColor Yellow
+        Write-Host (L "secrets_required_status") -ForegroundColor Yellow
         foreach ($secretName in $requiredSecrets) {
             if ($secretsList -match $secretName) {
                 Write-Host "  $([char]0x2713) $secretName" -ForegroundColor Green
             } else {
-                Write-Host "  $([char]0x2717) $secretName (not configured)" -ForegroundColor Red
+                Write-Host "  $([char]0x2717) $secretName $(L 'secrets_not_configured')" -ForegroundColor Red
             }
         }
         
         Write-Host ""
-        Write-Host "Full secrets list:" -ForegroundColor Gray
+        Write-Host (L "secrets_full_list") -ForegroundColor Gray
         Write-Host $secretsList -ForegroundColor Gray
         
     } catch {
-        Write-Host "Error: $_" -ForegroundColor Red
+        Write-Host (L "secrets_error" $_) -ForegroundColor Red
     }
     
     Write-Host ""
