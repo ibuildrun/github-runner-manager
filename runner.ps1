@@ -269,6 +269,6 @@ do {
 } while ($choice -ne "0")
 
 Write-Host ""
-Write-Host "Thank you for using Octopus Runner Manager!" -ForegroundColor Cyan
-Write-Host "Powered by ibuildrun" -ForegroundColor Magenta
+Write-Host (L "goodbye_message") -ForegroundColor Cyan
+Write-Host "$(L 'goodbye_powered') ibuildrun" -ForegroundColor Magenta
 Write-Host ""

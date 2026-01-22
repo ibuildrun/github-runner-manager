@@ -5,14 +5,15 @@ function Show-Banner {
     Write-Host "  ╔═══════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
     Write-Host "  ║                                                           ║" -ForegroundColor Cyan
     Write-Host "  ║     " -NoNewline -ForegroundColor Cyan
-    Write-Host "OCTOPUS RUNNER MANAGER" -NoNewline -ForegroundColor White
+    Write-Host (L "banner_title") -NoNewline -ForegroundColor White
     Write-Host "                          ║" -ForegroundColor Cyan
     Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host "Advanced CI/CD Infrastructure Suite" -NoNewline -ForegroundColor Gray
+    Write-Host (L "banner_subtitle") -NoNewline -ForegroundColor Gray
     Write-Host "                  ║" -ForegroundColor Cyan
     Write-Host "  ║                                                           ║" -ForegroundColor Cyan
     Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host "Powered by " -NoNewline -ForegroundColor DarkGray
+    Write-Host (L "banner_powered") -NoNewline -ForegroundColor DarkGray
+    Write-Host " " -NoNewline
     Write-Host "ibuildrun" -NoNewline -ForegroundColor Magenta
     Write-Host "                                    ║" -ForegroundColor Cyan
     Write-Host "  ║                                                           ║" -ForegroundColor Cyan
@@ -33,59 +34,59 @@ function Show-MainMenu {
     $platformName = $Config.GetPlatformDisplayName()
     $platformEmoji = if ($Config.Platform -eq "gitlab") { "🦊" } else { "🐙" }
     
-    Write-Host "  $platformName Platform: " -NoNewline -ForegroundColor Cyan
+    Write-Host "  $platformName $(L 'status_platform'): " -NoNewline -ForegroundColor Cyan
     Write-Host "$platformName" -ForegroundColor White
     
     if ($Config.Platform -eq "gitlab" -and $Config.InstanceUrl) {
-        Write-Host "  Instance: " -NoNewline -ForegroundColor Cyan
+        Write-Host "  $(L 'status_instance'): " -NoNewline -ForegroundColor Cyan
         Write-Host "$($Config.InstanceUrl)" -ForegroundColor White
     }
     
     if ($Config.Repository) {
         $targetLabel = if ($Config.Platform -eq "gitlab") { 
-            if ($Config.TargetType -eq "group") { "Group" } else { "Project" }
-        } else { "Repository" }
+            if ($Config.TargetType -eq "group") { L "menu_group" } else { L "menu_project" }
+        } else { L "status_repository" }
         Write-Host "  ${targetLabel}: " -NoNewline -ForegroundColor Cyan
         Write-Host "$($Config.Repository)" -ForegroundColor Green
     } else {
-        Write-Host "  Target: " -NoNewline -ForegroundColor Cyan
-        Write-Host "Not configured" -ForegroundColor Yellow
+        Write-Host "  $(L 'menu_target'): " -NoNewline -ForegroundColor Cyan
+        Write-Host (L "status_not_configured") -ForegroundColor Yellow
     }
     
-    $tokenStatus = if ($Config.GitHubToken) { "Configured" } else { "Not set" }
+    $tokenStatus = if ($Config.GitHubToken) { L "status_configured" } else { L "menu_not_set" }
     $tokenColor = if ($Config.GitHubToken) { "Green" } else { "Yellow" }
-    Write-Host "  Token: " -NoNewline -ForegroundColor Cyan
+    Write-Host "  $(L 'status_token'): " -NoNewline -ForegroundColor Cyan
     Write-Host "$tokenStatus" -ForegroundColor $tokenColor
     
     # Show Telegram status
     $telegramConfig = $Config.GetTelegramConfig()
     if ($telegramConfig.Enabled) {
-        Write-Host "  Telegram: " -NoNewline -ForegroundColor Cyan
+        Write-Host "  $(L 'status_telegram'): " -NoNewline -ForegroundColor Cyan
         $userCount = $telegramConfig.ChatIds.Count
-        Write-Host "Enabled ($userCount)" -ForegroundColor Green
+        Write-Host "$(L 'status_enabled') ($userCount)" -ForegroundColor Green
     } else {
-        Write-Host "  Telegram: " -NoNewline -ForegroundColor Cyan
-        Write-Host "Disabled" -ForegroundColor Gray
+        Write-Host "  $(L 'status_telegram'): " -NoNewline -ForegroundColor Cyan
+        Write-Host (L "status_disabled") -ForegroundColor Gray
     }
     
     # Show Docker runners count
     $dockerRunners = $Config.GetDockerRunners()
     if ($dockerRunners.Count -gt 0) {
-        Write-Host "  Docker: " -NoNewline -ForegroundColor Cyan
-        Write-Host "$($dockerRunners.Count) container(s)" -ForegroundColor Green
+        Write-Host "  $(L 'status_docker'): " -NoNewline -ForegroundColor Cyan
+        Write-Host "$($dockerRunners.Count) $(L 'status_containers')" -ForegroundColor Green
     }
     
     # Show local runners count and active runner
     $localRunners = $Config.GetLocalRunners()
     if ($localRunners.Count -gt 0) {
-        Write-Host "  Local Runners: " -NoNewline -ForegroundColor Cyan
-        Write-Host "$($localRunners.Count) configured" -ForegroundColor Green
+        Write-Host "  $(L 'status_local_runners'): " -NoNewline -ForegroundColor Cyan
+        Write-Host "$($localRunners.Count) $(L 'status_runners_configured')" -ForegroundColor Green
         
         $activeRunner = $Config.GetActiveRunner()
         if ($activeRunner) {
-            Write-Host "  Active Runner: " -NoNewline -ForegroundColor Cyan
+            Write-Host "  $(L 'status_active_runner'): " -NoNewline -ForegroundColor Cyan
             Write-Host "$($activeRunner.Name)" -ForegroundColor Yellow
-            Write-Host "    Path: " -NoNewline -ForegroundColor Cyan
+            Write-Host "    $(L 'status_path'): " -NoNewline -ForegroundColor Cyan
             Write-Host "$($activeRunner.Path)" -ForegroundColor Gray
         }
     }

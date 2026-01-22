@@ -414,3 +414,54 @@ $script:Translations["ru"]["menu_help"] = "Справка и быстрый ст
 $script:Translations["ru"]["menu_language"] = "Язык / Language"
 $script:Translations["ru"]["menu_exit"] = "Выход"
 $script:Translations["ru"]["menu_select_option"] = "Выберите опцию"
+
+
+# Banner and status translations
+$script:Translations["en"]["banner_title"] = "OCTOPUS RUNNER MANAGER"
+$script:Translations["en"]["banner_subtitle"] = "Advanced CI/CD Infrastructure Suite"
+$script:Translations["en"]["banner_powered"] = "Powered by"
+
+$script:Translations["ru"]["banner_title"] = "OCTOPUS RUNNER MANAGER"
+$script:Translations["ru"]["banner_subtitle"] = "Продвинутый набор CI/CD инфраструктуры"
+$script:Translations["ru"]["banner_powered"] = "Разработано"
+
+# Status display translations
+$script:Translations["en"]["status_platform"] = "Platform"
+$script:Translations["en"]["status_instance"] = "Instance"
+$script:Translations["en"]["status_repository"] = "Repository"
+$script:Translations["en"]["status_token"] = "Token"
+$script:Translations["en"]["status_telegram"] = "Telegram"
+$script:Translations["en"]["status_docker"] = "Docker"
+$script:Translations["en"]["status_local_runners"] = "Local Runners"
+$script:Translations["en"]["status_active_runner"] = "Active Runner"
+$script:Translations["en"]["status_path"] = "Path"
+$script:Translations["en"]["status_configured"] = "Configured"
+$script:Translations["en"]["status_not_configured"] = "Not configured"
+$script:Translations["en"]["status_enabled"] = "Enabled"
+$script:Translations["en"]["status_disabled"] = "Disabled"
+$script:Translations["en"]["status_containers"] = "container(s)"
+$script:Translations["en"]["status_runners_configured"] = "configured"
+
+$script:Translations["ru"]["status_platform"] = "Платформа"
+$script:Translations["ru"]["status_instance"] = "Инстанс"
+$script:Translations["ru"]["status_repository"] = "Репозиторий"
+$script:Translations["ru"]["status_token"] = "Токен"
+$script:Translations["ru"]["status_telegram"] = "Telegram"
+$script:Translations["ru"]["status_docker"] = "Docker"
+$script:Translations["ru"]["status_local_runners"] = "Локальные Runner'ы"
+$script:Translations["ru"]["status_active_runner"] = "Активный Runner"
+$script:Translations["ru"]["status_path"] = "Путь"
+$script:Translations["ru"]["status_configured"] = "Настроен"
+$script:Translations["ru"]["status_not_configured"] = "Не настроено"
+$script:Translations["ru"]["status_enabled"] = "Включен"
+$script:Translations["ru"]["status_disabled"] = "Отключен"
+$script:Translations["ru"]["status_containers"] = "контейнер(ов)"
+$script:Translations["ru"]["status_runners_configured"] = "настроено"
+
+
+# Exit messages
+$script:Translations["en"]["goodbye_message"] = "Thank you for using Octopus Runner Manager!"
+$script:Translations["en"]["goodbye_powered"] = "Powered by"
+
+$script:Translations["ru"]["goodbye_message"] = "Спасибо за использование Octopus Runner Manager!"
+$script:Translations["ru"]["goodbye_powered"] = "Разработано"
