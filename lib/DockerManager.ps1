@@ -785,28 +785,43 @@ function Invoke-DockerManagement {
                 Write-Host ""
                 Write-Host "Tip: You can use partial container name or ID" -ForegroundColor Gray
                 $containerName = Read-Host "Enter container ID or name"
-                Stop-DockerRunner -ContainerIdOrName $containerName
+                
+                if ([string]::IsNullOrWhiteSpace($containerName)) {
+                    Write-Host (L "docker_error_empty_name") -ForegroundColor Red
+                } else {
+                    Stop-DockerRunner -ContainerIdOrName $containerName
+                }
             }
             "5" {
                 Write-Host ""
                 Write-Host "Tip: You can use partial container name or ID" -ForegroundColor Gray
                 $containerName = Read-Host "Enter container ID or name"
-                $force = Read-Host "Force remove? (y/n)"
                 
-                if ($force -eq 'y') {
-                    Remove-DockerRunner -ContainerIdOrName $containerName -Force
+                if ([string]::IsNullOrWhiteSpace($containerName)) {
+                    Write-Host (L "docker_error_empty_name") -ForegroundColor Red
                 } else {
-                    Remove-DockerRunner -ContainerIdOrName $containerName
+                    $force = Read-Host "Force remove? (y/n)"
+                    
+                    if ($force -eq 'y') {
+                        Remove-DockerRunner -ContainerIdOrName $containerName -Force
+                    } else {
+                        Remove-DockerRunner -ContainerIdOrName $containerName
+                    }
                 }
             }
             "6" {
                 Write-Host ""
                 Write-Host "Tip: You can use partial container name or ID" -ForegroundColor Gray
                 $containerName = Read-Host "Enter container ID or name"
-                $lines = Read-Host "Number of lines (default: 50)"
-                if ([string]::IsNullOrEmpty($lines)) { $lines = 50 }
                 
-                Show-DockerRunnerLogs -ContainerIdOrName $containerName -Lines $lines
+                if ([string]::IsNullOrWhiteSpace($containerName)) {
+                    Write-Host (L "docker_error_empty_name") -ForegroundColor Red
+                } else {
+                    $lines = Read-Host "Number of lines (default: 50)"
+                    if ([string]::IsNullOrEmpty($lines)) { $lines = 50 }
+                    
+                    Show-DockerRunnerLogs -ContainerIdOrName $containerName -Lines $lines
+                }
             }
             "7" {
                 $count = [int](Read-Host "How many containers to deploy?")
@@ -850,13 +865,23 @@ function Invoke-DockerManagement {
                 Write-Host ""
                 Write-Host "Tip: You can use partial container name or ID (e.g., 'avyx' or '0d81')" -ForegroundColor Gray
                 $containerName = Read-Host "Enter container ID or name"
-                Restart-DockerRunner -ContainerIdOrName $containerName
+                
+                if ([string]::IsNullOrWhiteSpace($containerName)) {
+                    Write-Host (L "docker_error_empty_name") -ForegroundColor Red
+                } else {
+                    Restart-DockerRunner -ContainerIdOrName $containerName
+                }
             }
             "10" {
                 Write-Host ""
                 Write-Host "Tip: You can use partial container name or ID (e.g., 'avyx' or '0d81')" -ForegroundColor Gray
                 $containerName = Read-Host "Enter container ID or name"
-                Test-DockerRunnerHealth -ContainerIdOrName $containerName
+                
+                if ([string]::IsNullOrWhiteSpace($containerName)) {
+                    Write-Host (L "docker_error_empty_name") -ForegroundColor Red
+                } else {
+                    Test-DockerRunnerHealth -ContainerIdOrName $containerName
+                }
             }
             "11" {
                 Remove-OfflineRunners -Token $Config.GitHubToken -Repository $Config.Repository

@@ -1054,3 +1054,8 @@ $script:Translations["en"]["status_loading_docker"] = "Checking Docker container
 
 $script:Translations["ru"]["status_loading"] = "Загрузка статуса..."
 $script:Translations["ru"]["status_loading_docker"] = "Проверка Docker контейнеров"
+
+
+# Docker error messages
+$script:Translations["en"]["docker_error_empty_name"] = "Container name cannot be empty"
+$script:Translations["ru"]["docker_error_empty_name"] = "Имя контейнера не может быть пустым"
