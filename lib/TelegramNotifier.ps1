@@ -1,4 +1,4 @@
-# Telegram Notification Module
+﻿# Telegram Notification Module
 # Supports multiple users for notifications
 
 # Define TelegramConfig class only if not already defined
@@ -191,7 +191,7 @@ function Get-TelegramChatId {
 function Invoke-TelegramConfiguration {
     param(
         [Parameter(Mandatory=$true)]
-        [RunnerConfig]$Config
+        [object]$Config
     )
     
     Write-Host ""

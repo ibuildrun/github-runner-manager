@@ -1,5 +1,10 @@
 # Configuration Management Module
 
+# Prevent double-loading
+if (([System.Management.Automation.PSTypeName]'RunnerConfig').Type) {
+    return
+}
+
 # Load PlatformProvider if not already loaded
 if (-not ([System.Management.Automation.PSTypeName]'IPlatformProvider').Type) {
     . "$PSScriptRoot\PlatformProvider.ps1"

@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # GitHub Actions Infrastructure Suite
 # Advanced management system for self-hosted runners with Docker and Telegram integration
 
@@ -8,41 +8,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# Simple localization stub (returns key as-is for now)
-function L {
-    param([string]$key, [string]$param1 = "", [string]$param2 = "")
-    # Return English text based on key
-    $translations = @{
-        "menu_title" = "Runner Manager"
-        "menu_subtitle" = "Advanced Infrastructure Suite"
-        "menu_platform" = "Platform"
-        "menu_instance" = "Instance"
-        "menu_repository" = "Repository"
-        "menu_group" = "Group"
-        "menu_project" = "Project"
-        "menu_target" = "Target"
-        "menu_not_configured" = "Not configured"
-        "menu_token" = "Token"
-        "menu_configured" = "Configured"
-        "menu_not_set" = "Not set"
-        "menu_telegram" = "Telegram"
-        "menu_enabled" = "Enabled"
-        "menu_disabled" = "Disabled"
-        "menu_users" = "users"
-        "menu_docker_runners" = "Docker Runners"
-        "menu_containers" = "containers"
-        "invalid_option" = "Invalid option. Please try again."
-        "press_enter" = "Press Enter to continue"
-        "goodbye" = "Thank you for using Octopus Runner Manager!"
-        "cancelled" = "Cancelled"
-        "error" = "Error"
-    }
-    
-    if ($translations.ContainsKey($key)) {
-        return $translations[$key] -f $param1, $param2
-    }
-    return $key
-}
+# Import localization module first
+. "$PSScriptRoot\lib\Localization.ps1"
 
 # Import modules in correct order (dependencies first)
 . "$PSScriptRoot\lib\PlatformProvider.ps1"
@@ -68,6 +35,21 @@ $configPath = "$PSScriptRoot\.runner-config.json"
 $config = [RunnerConfig]::new($configPath)
 $config.Load()
 
+# Set language from config
+if ($config.Language) {
+    Set-Language -Language $config.Language
+} else {
+    # Auto-detect system language
+    $systemLang = (Get-Culture).TwoLetterISOLanguageName
+    if ($systemLang -eq "ru") {
+        Set-Language -Language "ru"
+        $config.Language = "ru"
+        $config.Save("None")
+    } else {
+        Set-Language -Language "en"
+    }
+}
+
 # Helper function to safely get effective runner path
 function Get-EffectiveRunnerPath {
     param($Config, $DefaultPath)
@@ -88,7 +70,7 @@ $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $Run
 # Main menu loop
 do {
     Show-MainMenu -Config $config
-    $choice = Read-Host "Select option"
+    $choice = Read-Host (L "menu_select_option")
     
     switch ($choice) {
         "1" { 
@@ -247,6 +229,30 @@ do {
         }
         "18" {
             Show-HelpGuide
+        }
+        "19" {
+            # Language Selection
+            Write-Host ""
+            Write-Host "=== Language / Язык ===" -ForegroundColor Cyan
+            Write-Host ""
+            Write-Host "1. English" -ForegroundColor White
+            Write-Host "2. Русский" -ForegroundColor White
+            Write-Host ""
+            $langChoice = Read-Host "Select language / Выберите язык"
+            
+            if ($langChoice -eq "1") {
+                Set-Language -Language "en"
+                $config.Language = "en"
+                $config.Save("None")
+                Write-Host "Language changed to English" -ForegroundColor Green
+            } elseif ($langChoice -eq "2") {
+                Set-Language -Language "ru"
+                $config.Language = "ru"
+                $config.Save("None")
+                Write-Host "Язык изменен на Русский" -ForegroundColor Green
+            } else {
+                Write-Host "Invalid selection / Неверный выбор" -ForegroundColor Red
+            }
         }
         "0" { 
             break 

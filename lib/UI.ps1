@@ -93,45 +93,46 @@ function Show-MainMenu {
     Write-Host ""
     Write-Host "  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "  Configuration" -ForegroundColor Cyan
-    Write-Host "    1. Configure $platformName Token" -ForegroundColor White
+    Write-Host "  $(L 'menu_configuration')" -ForegroundColor Cyan
+    Write-Host "    1. $(L 'menu_configure_token' $platformName)" -ForegroundColor White
     
     if ($Config.Platform -eq "gitlab") {
-        Write-Host "    2. Select Project/Group" -ForegroundColor White
-        Write-Host "    3. Configure Instance URL" -ForegroundColor White
+        Write-Host "    2. $(L 'menu_select_project_group')" -ForegroundColor White
+        Write-Host "    3. $(L 'menu_configure_instance')" -ForegroundColor White
     } else {
-        Write-Host "    2. Select Repository" -ForegroundColor White
-        Write-Host "    3. Configure GitHub Secrets (Auto)" -ForegroundColor Yellow
+        Write-Host "    2. $(L 'menu_select_repository')" -ForegroundColor White
+        Write-Host "    3. $(L 'menu_configure_secrets')" -ForegroundColor Yellow
     }
     
-    Write-Host "    4. Switch Platform (GitHub / GitLab)" -ForegroundColor Magenta
+    Write-Host "    4. $(L 'menu_switch_platform')" -ForegroundColor Magenta
     Write-Host ""
-    Write-Host "  Runner Management" -ForegroundColor Cyan
-    Write-Host "    5. Install Runner" -ForegroundColor White
-    Write-Host "    6. Start Runner" -ForegroundColor White
-    Write-Host "    7. Stop Runner" -ForegroundColor White
-    Write-Host "    8. Check Status" -ForegroundColor White
-    Write-Host "    9. View Logs" -ForegroundColor White
+    Write-Host "  $(L 'menu_runner_management')" -ForegroundColor Cyan
+    Write-Host "    5. $(L 'menu_install_runner')" -ForegroundColor White
+    Write-Host "    6. $(L 'menu_start_runner')" -ForegroundColor White
+    Write-Host "    7. $(L 'menu_stop_runner')" -ForegroundColor White
+    Write-Host "    8. $(L 'menu_check_status')" -ForegroundColor White
+    Write-Host "    9. $(L 'menu_view_logs')" -ForegroundColor White
     if ($Config.Platform -eq "gitlab") {
-        Write-Host "    10. View Active Runners" -ForegroundColor White
+        Write-Host "    10. $(L 'menu_view_active_runners')" -ForegroundColor White
     }
     Write-Host ""
-    Write-Host "  Auto-Start" -ForegroundColor Cyan
-    Write-Host "    11. Enable Auto-Start (on boot)" -ForegroundColor White
-    Write-Host "    12. Disable Auto-Start" -ForegroundColor White
+    Write-Host "  $(L 'menu_autostart')" -ForegroundColor Cyan
+    Write-Host "    11. $(L 'menu_enable_autostart')" -ForegroundColor White
+    Write-Host "    12. $(L 'menu_disable_autostart')" -ForegroundColor White
     Write-Host ""
-    Write-Host "  Advanced" -ForegroundColor Cyan
-    Write-Host "    13. Uninstall Runner" -ForegroundColor White
-    Write-Host "    14. Clear Configuration" -ForegroundColor White
+    Write-Host "  $(L 'menu_advanced')" -ForegroundColor Cyan
+    Write-Host "    13. $(L 'menu_uninstall_runner')" -ForegroundColor White
+    Write-Host "    14. $(L 'menu_clear_config')" -ForegroundColor White
     Write-Host ""
-    Write-Host "  Infrastructure Suite" -ForegroundColor Magenta
-    Write-Host "    15. Telegram Notifications" -ForegroundColor White
-    Write-Host "    16. Docker Container Management" -ForegroundColor White
-    Write-Host "    17. Multi-Runner Management" -ForegroundColor Yellow
+    Write-Host "  $(L 'menu_infrastructure')" -ForegroundColor Magenta
+    Write-Host "    15. $(L 'menu_telegram')" -ForegroundColor White
+    Write-Host "    16. $(L 'menu_docker')" -ForegroundColor White
+    Write-Host "    17. $(L 'menu_multirunner')" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "    18. Help and Quick Start Guide" -ForegroundColor Yellow
+    Write-Host "    18. $(L 'menu_help')" -ForegroundColor Yellow
+    Write-Host "    19. $(L 'menu_language')" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "    0. Exit" -ForegroundColor White
+    Write-Host "    0. $(L 'menu_exit')" -ForegroundColor White
     Write-Host ""
 }
 
@@ -185,9 +186,9 @@ function Show-Status {
     Write-Host "========================================" -ForegroundColor Cyan
     
     # Configuration
-    $repoDisplay = if ($Config.Repository) { $Config.Repository } else { L "menu_not_configured" }
-    Write-Host "$(L 'menu_repository'): $repoDisplay" -ForegroundColor $(if ($Config.Repository) { "Green" } else { "Yellow" })
-    Write-Host "$(L 'menu_token'): $(if ($Config.GitHubToken) { L 'menu_configured' } else { L 'menu_not_set' })" -ForegroundColor $(if ($Config.GitHubToken) { "Green" } else { "Yellow" })
+    $repoDisplay = if ($Config.Repository) { $Config.Repository } else { "Not configured" }
+    Write-Host "Repository: $repoDisplay" -ForegroundColor $(if ($Config.Repository) { "Green" } else { "Yellow" })
+    Write-Host "Token: $(if ($Config.GitHubToken) { 'Configured' } else { 'Not set' })" -ForegroundColor $(if ($Config.GitHubToken) { "Green" } else { "Yellow" })
     Write-Host ""
     
     # Check installation
@@ -202,9 +203,9 @@ function Show-Status {
     $taskName = Get-ScheduledTaskName -Repository $Config.Repository
     $task = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
     if ($task) {
-        Write-Host "Auto-Start: $(L 'menu_enabled') ($($task.State))" -ForegroundColor Green
+        Write-Host "Auto-Start: Enabled ($($task.State))" -ForegroundColor Green
     } else {
-        Write-Host "Auto-Start: $(L 'menu_disabled')" -ForegroundColor Yellow
+        Write-Host "Auto-Start: Disabled" -ForegroundColor Yellow
     }
     
     # Check process

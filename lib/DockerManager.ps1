@@ -1,4 +1,4 @@
-# Docker Container Management Module
+﻿# Docker Container Management Module
 # Manages self-hosted runners in Docker containers
 
 class DockerRunnerConfig {
@@ -222,7 +222,7 @@ trap cleanup EXIT
 function Start-DockerRunner {
     param(
         [Parameter(Mandatory=$true)]
-        [RunnerConfig]$Config,
+        [object]$Config,
         
         [Parameter(Mandatory=$false)]
         [string]$RunnerName,
@@ -584,7 +584,7 @@ function Test-DockerRunnerHealth {
 function Update-DockerRunner {
     param(
         [Parameter(Mandatory=$true)]
-        [RunnerConfig]$Config,
+        [object]$Config,
         
         [Parameter(Mandatory=$false)]
         [string]$ImageTag = "github-runner:latest"
@@ -688,7 +688,7 @@ function Update-DockerRunner {
 function Invoke-DockerManagement {
     param(
         [Parameter(Mandatory=$true)]
-        [RunnerConfig]$Config
+        [object]$Config
     )
     
     do {
