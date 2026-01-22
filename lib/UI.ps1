@@ -1,21 +1,51 @@
 ﻿# User Interface Module
 
 function Show-Banner {
+    $title = L "banner_title"
+    $subtitle = L "banner_subtitle"
+    $powered = L "banner_powered"
+    
+    # Calculate padding for centering
+    $boxWidth = 59
+    $titlePadding = [Math]::Max(0, [Math]::Floor(($boxWidth - $title.Length) / 2))
+    $titlePaddingRight = [Math]::Max(0, $boxWidth - $title.Length - $titlePadding)
+    
+    $subtitlePadding = [Math]::Max(0, [Math]::Floor(($boxWidth - $subtitle.Length) / 2))
+    $subtitlePaddingRight = [Math]::Max(0, $boxWidth - $subtitle.Length - $subtitlePadding)
+    
+    $poweredText = "$powered ibuildrun"
+    $poweredPadding = [Math]::Max(0, [Math]::Floor(($boxWidth - $poweredText.Length) / 2))
+    $poweredPaddingRight = [Math]::Max(0, $boxWidth - $poweredText.Length - $poweredPadding)
+    
     Write-Host ""
     Write-Host "  ╔═══════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
     Write-Host "  ║                                                           ║" -ForegroundColor Cyan
-    Write-Host "  ║     " -NoNewline -ForegroundColor Cyan
-    Write-Host (L "banner_title") -NoNewline -ForegroundColor White
-    Write-Host "                          ║" -ForegroundColor Cyan
-    Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host (L "banner_subtitle") -NoNewline -ForegroundColor Gray
-    Write-Host "                  ║" -ForegroundColor Cyan
+    
+    # Title line
+    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
+    Write-Host (" " * $titlePadding) -NoNewline
+    Write-Host $title -NoNewline -ForegroundColor White
+    Write-Host (" " * $titlePaddingRight) -NoNewline
+    Write-Host "║" -ForegroundColor Cyan
+    
+    # Subtitle line
+    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
+    Write-Host (" " * $subtitlePadding) -NoNewline
+    Write-Host $subtitle -NoNewline -ForegroundColor Gray
+    Write-Host (" " * $subtitlePaddingRight) -NoNewline
+    Write-Host "║" -ForegroundColor Cyan
+    
     Write-Host "  ║                                                           ║" -ForegroundColor Cyan
-    Write-Host "  ║   " -NoNewline -ForegroundColor Cyan
-    Write-Host (L "banner_powered") -NoNewline -ForegroundColor DarkGray
+    
+    # Powered by line
+    Write-Host "  ║" -NoNewline -ForegroundColor Cyan
+    Write-Host (" " * $poweredPadding) -NoNewline
+    Write-Host $powered -NoNewline -ForegroundColor DarkGray
     Write-Host " " -NoNewline
     Write-Host "ibuildrun" -NoNewline -ForegroundColor Magenta
-    Write-Host "                                    ║" -ForegroundColor Cyan
+    Write-Host (" " * $poweredPaddingRight) -NoNewline
+    Write-Host "║" -ForegroundColor Cyan
+    
     Write-Host "  ║                                                           ║" -ForegroundColor Cyan
     Write-Host "  ╚═══════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
     Write-Host ""
