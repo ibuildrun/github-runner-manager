@@ -99,24 +99,26 @@ function Show-MainMenu {
         Write-Host (L "status_disabled") -ForegroundColor Gray
     }
     
+    Write-Host ""
+    
     # Show Docker runners count
     $dockerRunners = $Config.GetDockerRunners()
     if ($dockerRunners.Count -gt 0) {
-        Write-Host "  $(L 'status_docker'): " -NoNewline -ForegroundColor Cyan
+        Write-Host "  $(L 'status_docker') Runners (Containers): " -NoNewline -ForegroundColor Magenta
         Write-Host "$($dockerRunners.Count) $(L 'status_containers')" -ForegroundColor Green
     }
     
     # Show local runners count and active runner
     $localRunners = $Config.GetLocalRunners()
     if ($localRunners.Count -gt 0) {
-        Write-Host "  $(L 'status_local_runners'): " -NoNewline -ForegroundColor Cyan
+        Write-Host "  $(L 'status_local_runners') (Windows): " -NoNewline -ForegroundColor Cyan
         Write-Host "$($localRunners.Count) $(L 'status_runners_configured')" -ForegroundColor Green
         
         $activeRunner = $Config.GetActiveRunner()
         if ($activeRunner) {
-            Write-Host "  $(L 'status_active_runner'): " -NoNewline -ForegroundColor Cyan
+            Write-Host "    └─ $(L 'status_active_runner'): " -NoNewline -ForegroundColor Cyan
             Write-Host "$($activeRunner.Name)" -ForegroundColor Yellow
-            Write-Host "    $(L 'status_path'): " -NoNewline -ForegroundColor Cyan
+            Write-Host "       $(L 'status_path'): " -NoNewline -ForegroundColor Cyan
             Write-Host "$($activeRunner.Path)" -ForegroundColor Gray
         }
     }

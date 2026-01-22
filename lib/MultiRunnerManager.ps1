@@ -1,4 +1,4 @@
-# Multi-Runner Management Module
+﻿# Multi-Runner Management Module
 # Manages multiple local GitHub/GitLab runners
 
 function Show-LocalRunners {
@@ -10,13 +10,16 @@ function Show-LocalRunners {
     $runners = $Config.GetLocalRunners()
     
     Write-Host ""
-    Write-Host "=== Local Runners ===" -ForegroundColor Cyan
+    Write-Host "=== Local Runners (Windows) ===" -ForegroundColor Cyan
     Write-Host ""
     
     if ($runners.Count -eq 0) {
         Write-Host "No local runners configured" -ForegroundColor Yellow
         Write-Host ""
         Write-Host "Tip: Use option 1 to add a new runner" -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "Note: Local runners run directly on Windows." -ForegroundColor DarkGray
+        Write-Host "      Docker runners are managed separately (Main Menu → Option 16)" -ForegroundColor DarkGray
         return
     }
     
@@ -26,19 +29,57 @@ function Show-LocalRunners {
         $isActive = $runner.Id -eq $activeRunnerId
         $prefix = if ($isActive) { "[ACTIVE]" } else { "       " }
         
+        # Check if runner is installed
+        $isInstalled = Test-Path "$($runner.Path)\run.cmd"
+        
+        # Check if runner is running
+        $isRunning = Test-RunnerProcess -RunnerPath $runner.Path
+        
+        # Determine status
+        if (-not $isInstalled) {
+            $status = "Not Installed"
+            $statusColor = "Red"
+            $statusIcon = "✗"
+        } elseif ($isRunning) {
+            $status = "Running"
+            $statusColor = "Green"
+            $statusIcon = "✓"
+        } else {
+            $status = "Stopped"
+            $statusColor = "Yellow"
+            $statusIcon = "○"
+        }
+        
         Write-Host "$prefix Runner: $($runner.Name)" -ForegroundColor $(if ($isActive) { "Green" } else { "White" })
+        Write-Host "        Type: Local (Windows)" -ForegroundColor Cyan
         Write-Host "        ID: $($runner.Id)" -ForegroundColor Gray
         Write-Host "        Repository: $($runner.Repository)" -ForegroundColor Gray
         Write-Host "        Path: $($runner.Path)" -ForegroundColor Gray
         Write-Host "        Platform: $($runner.Platform)" -ForegroundColor Gray
+        Write-Host "        Status: $statusIcon $status" -ForegroundColor $statusColor
         
-        # Check if runner is running
-        $isRunning = Test-RunnerProcess -RunnerPath $runner.Path
-        $status = if ($isRunning) { "Running" } else { "Stopped" }
-        $statusColor = if ($isRunning) { "Green" } else { "Yellow" }
-        Write-Host "        Status: $status" -ForegroundColor $statusColor
+        if ($isInstalled -and $isRunning) {
+            # Try to get process info
+            $process = Get-Process -Name "Runner.Listener" -ErrorAction SilentlyContinue | Where-Object {
+                try {
+                    $_.Path -and $_.Path.StartsWith($runner.Path, [StringComparison]::OrdinalIgnoreCase)
+                } catch {
+                    $false
+                }
+            } | Select-Object -First 1
+            
+            if ($process) {
+                Write-Host "        PID: $($process.Id)" -ForegroundColor DarkGray
+                $uptime = (Get-Date) - $process.StartTime
+                Write-Host "        Uptime: $($uptime.Days)d $($uptime.Hours)h $($uptime.Minutes)m" -ForegroundColor DarkGray
+            }
+        }
+        
         Write-Host ""
     }
+    
+    Write-Host "Docker Runners: Managed separately (Main Menu → Option 16)" -ForegroundColor DarkGray
+    Write-Host ""
 }
 
 function Add-LocalRunner {
