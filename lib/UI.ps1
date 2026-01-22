@@ -103,14 +103,25 @@ function Show-MainMenu {
     
     # Show Docker runners count (real running containers with "runner" in name)
     try {
-        $allContainers = docker ps --format "{{.Names}}" 2>$null
-        if ($LASTEXITCODE -eq 0 -and $allContainers) {
-            $runnerContainers = $allContainers | Where-Object { $_ -match "runner" }
-            $containerCount = ($runnerContainers | Measure-Object).Count
-            if ($containerCount -gt 0) {
-                Write-Host "  $(L 'status_docker') Runners (Containers): " -NoNewline -ForegroundColor Magenta
-                Write-Host "$containerCount $(L 'status_running')" -ForegroundColor Green
+        # Use Start-Job with timeout to prevent hanging
+        $dockerJob = Start-Job -ScriptBlock { docker ps --format "{{.Names}}" 2>$null }
+        $completed = Wait-Job -Job $dockerJob -Timeout 3
+        
+        if ($completed) {
+            $allContainers = Receive-Job -Job $dockerJob
+            Remove-Job -Job $dockerJob -Force
+            
+            if ($LASTEXITCODE -eq 0 -and $allContainers) {
+                $runnerContainers = $allContainers | Where-Object { $_ -match "runner" }
+                $containerCount = ($runnerContainers | Measure-Object).Count
+                if ($containerCount -gt 0) {
+                    Write-Host "  $(L 'status_docker') Runners (Containers): " -NoNewline -ForegroundColor Magenta
+                    Write-Host "$containerCount $(L 'status_running')" -ForegroundColor Green
+                }
             }
+        } else {
+            # Timeout - kill the job
+            Remove-Job -Job $dockerJob -Force
         }
     } catch {
         # Docker not available, skip
