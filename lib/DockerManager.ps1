@@ -231,7 +231,13 @@ function Start-DockerRunner {
         [string]$ImageTag = "github-runner:latest",
         
         [Parameter(Mandatory=$false)]
-        [hashtable]$AdditionalEnvVars = @{}
+        [hashtable]$AdditionalEnvVars = @{},
+        
+        [Parameter(Mandatory=$false)]
+        [string]$Memory = "",
+        
+        [Parameter(Mandatory=$false)]
+        [string]$CpuLimit = ""
     )
     
     if (-not (Test-DockerInstalled)) { return $null }
@@ -277,9 +283,20 @@ function Start-DockerRunner {
         $envArgs += "$key=$($AdditionalEnvVars[$key])"
     }
     
+    # Add resource limits if specified
+    $resourceArgs = @()
+    if (-not [string]::IsNullOrEmpty($Memory)) {
+        $resourceArgs += "--memory=$Memory"
+        Write-Host "Memory limit: $Memory" -ForegroundColor Gray
+    }
+    if (-not [string]::IsNullOrEmpty($CpuLimit)) {
+        $resourceArgs += "--cpus=$CpuLimit"
+        Write-Host "CPU limit: $CpuLimit cores" -ForegroundColor Gray
+    }
+    
     # Start container
     Write-Host "Creating container..." -ForegroundColor Yellow
-    $containerId = docker run -d --name $RunnerName @envArgs $ImageTag
+    $containerId = docker run -d --name $RunnerName @envArgs @resourceArgs $ImageTag
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "$([char]0x2713) Container started successfully" -ForegroundColor Green
@@ -581,6 +598,58 @@ function Test-DockerRunnerHealth {
     Write-Host ""
 }
 
+function Show-DockerRunnerStats {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$ContainerIdOrName
+    )
+    
+    $container = Get-DockerContainer -ContainerIdOrName $ContainerIdOrName
+    if (-not $container) { return }
+    
+    Write-Host ""
+    Write-Host "=== Container Resource Usage ===" -ForegroundColor Cyan
+    Write-Host "Container: $($container.Name)" -ForegroundColor Green
+    Write-Host ""
+    
+    # Get real-time stats (one snapshot)
+    Write-Host "Fetching resource statistics..." -ForegroundColor Yellow
+    $stats = docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}" $container.ContainerId 2>$null
+    
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host ""
+        Write-Host $stats -ForegroundColor White
+        Write-Host ""
+        
+        # Get container inspect for limits
+        $inspect = docker inspect $container.ContainerId | ConvertFrom-Json
+        $hostConfig = $inspect.HostConfig
+        
+        Write-Host "=== Resource Limits ===" -ForegroundColor Cyan
+        
+        if ($hostConfig.Memory -gt 0) {
+            $memoryLimitGB = [math]::Round($hostConfig.Memory / 1GB, 2)
+            Write-Host "Memory Limit: $memoryLimitGB GB" -ForegroundColor Green
+        } else {
+            Write-Host "Memory Limit: Unlimited" -ForegroundColor Yellow
+        }
+        
+        if ($hostConfig.NanoCpus -gt 0) {
+            $cpuLimit = $hostConfig.NanoCpus / 1000000000
+            Write-Host "CPU Limit: $cpuLimit cores" -ForegroundColor Green
+        } else {
+            Write-Host "CPU Limit: Unlimited" -ForegroundColor Yellow
+        }
+        
+        Write-Host ""
+        Write-Host "Tip: Use 'docker stats $($container.Name)' for live monitoring" -ForegroundColor Gray
+    } else {
+        Write-Host "Failed to get container stats" -ForegroundColor Red
+    }
+    
+    Write-Host ""
+}
+
 function Update-DockerRunner {
     param(
         [Parameter(Mandatory=$true)]
@@ -706,6 +775,7 @@ function Invoke-DockerManagement {
         Write-Host "9. $(L 'docker_option_restart')"
         Write-Host "10. $(L 'docker_option_health')"
         Write-Host "11. $(L 'docker_option_cleanup')"
+        Write-Host "12. View resource usage (CPU/Memory)" -ForegroundColor Cyan
         Write-Host "0. $(L 'docker_option_back')"
         Write-Host ""
         
@@ -738,13 +808,25 @@ function Invoke-DockerManagement {
                     $imageTag = "github-runner:latest"
                 }
                 
-                $runner = Start-DockerRunner -Config $Config -RunnerName $runnerName -ImageTag $imageTag
+                Write-Host ""
+                Write-Host "=== Resource Limits (optional) ===" -ForegroundColor Cyan
+                Write-Host "Leave empty for no limits (uses all available resources)" -ForegroundColor Gray
+                Write-Host ""
+                
+                $memory = Read-Host "Memory limit (e.g., 512m, 1g, 2g)"
+                $cpuLimit = Read-Host "CPU limit (e.g., 0.5, 1, 2)"
+                
+                $runner = Start-DockerRunner -Config $Config -RunnerName $runnerName -ImageTag $imageTag -Memory $memory -CpuLimit $cpuLimit
                 
                 if ($runner) {
                     # Send Telegram notification
                     $telegramConfig = $Config.GetTelegramConfig()
                     if ($telegramConfig.Enabled) {
-                        $message = "Docker Runner Started`n`nRepository: $($Config.Repository)`nRunner: $($runner.RunnerName)`nContainer: $($runner.ContainerId.Substring(0,12))"
+                        $resourceInfo = ""
+                        if (-not [string]::IsNullOrEmpty($memory)) { $resourceInfo += "`nMemory: $memory" }
+                        if (-not [string]::IsNullOrEmpty($cpuLimit)) { $resourceInfo += "`nCPU: $cpuLimit cores" }
+                        
+                        $message = "Docker Runner Started`n`nRepository: $($Config.Repository)`nRunner: $($runner.RunnerName)`nContainer: $($runner.ContainerId.Substring(0,12))$resourceInfo"
                         Send-TelegramNotification -TelegramConfig (ConvertTo-TelegramConfigObject $telegramConfig) -Message $message -Type "Success"
                     }
                 }
@@ -885,6 +967,17 @@ function Invoke-DockerManagement {
             }
             "11" {
                 Remove-OfflineRunners -Token $Config.GitHubToken -Repository $Config.Repository
+            }
+            "12" {
+                Write-Host ""
+                Write-Host "Tip: You can use partial container name or ID" -ForegroundColor Gray
+                $containerName = Read-Host "Enter container ID or name"
+                
+                if ([string]::IsNullOrWhiteSpace($containerName)) {
+                    Write-Host (L "docker_error_empty_name") -ForegroundColor Red
+                } else {
+                    Show-DockerRunnerStats -ContainerIdOrName $containerName
+                }
             }
         }
         
