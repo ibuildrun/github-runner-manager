@@ -1,4 +1,4 @@
-# GitHub API Integration Module
+﻿# GitHub API Integration Module
 # This module provides backward-compatible wrapper functions around GitHubProvider
 
 # Load GitHubProvider if not already loaded

@@ -1,4 +1,4 @@
-# Auto-Start Management Module
+﻿# Auto-Start Management Module
 
 . "$PSScriptRoot\Config.ps1"
 

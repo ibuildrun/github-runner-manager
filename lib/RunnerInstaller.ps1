@@ -1,4 +1,4 @@
-# Runner Installation Module
+﻿# Runner Installation Module
 
 . "$PSScriptRoot\GitHub.ps1"
 

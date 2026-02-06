@@ -1,4 +1,4 @@
-# GitLab Runner Lifecycle Management Module
+﻿# GitLab Runner Lifecycle Management Module
 
 function Start-GitLabRunner {
     param(

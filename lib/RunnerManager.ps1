@@ -1,4 +1,4 @@
-# Runner Process Management Module
+﻿# Runner Process Management Module
 
 function Start-GitHubRunner {
     param(

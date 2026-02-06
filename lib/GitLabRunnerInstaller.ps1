@@ -1,4 +1,4 @@
-# GitLab Runner Installation Module
+﻿# GitLab Runner Installation Module
 
 # Load platform providers if not already loaded
 if (-not ([System.Management.Automation.PSTypeName]'GitLabProvider').Type) {

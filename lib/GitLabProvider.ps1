@@ -1,4 +1,4 @@
-# GitLab Platform Provider Implementation
+﻿# GitLab Platform Provider Implementation
 # Implements IPlatformProvider interface for GitLab CI/CD runners
 
 # Load the base interface if not already loaded

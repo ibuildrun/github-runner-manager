@@ -1,4 +1,4 @@
-# Platform Provider Interface Module
+﻿# Platform Provider Interface Module
 # Base class defining the interface that all platform providers must implement
 
 class IPlatformProvider {

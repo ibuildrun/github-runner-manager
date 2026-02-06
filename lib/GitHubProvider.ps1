@@ -1,4 +1,4 @@
-# GitHub Platform Provider Implementation
+﻿# GitHub Platform Provider Implementation
 # Implements IPlatformProvider interface for GitHub Actions runners
 
 # Load the base interface if not already loaded

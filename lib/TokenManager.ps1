@@ -1,4 +1,4 @@
-# Token Management Module
+﻿# Token Management Module
 
 . "$PSScriptRoot\GitHub.ps1"
 
