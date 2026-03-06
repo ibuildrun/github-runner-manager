@@ -38,9 +38,20 @@ function Install-GitHubRunner {
         if (Test-Path "$RunnerPath\.runner") {
             Write-Host "Removing old configuration..." -ForegroundColor Yellow
             Set-Location $RunnerPath
-            $removeToken = Get-RunnerRegistrationToken -Token $Config.GitHubToken -Repository $Config.Repository
+            $removeToken = Get-RunnerRemovalToken -Token $Config.GitHubToken -Repository $Config.Repository
+            $removeSuccess = $false
             if ($removeToken) {
                 & ".\config.cmd" remove --token $removeToken
+                if ($LASTEXITCODE -eq 0) {
+                    $removeSuccess = $true
+                }
+            }
+            # Fallback: clean up local config files if config.cmd remove failed
+            if (-not $removeSuccess) {
+                Write-Host "Could not remove runner from GitHub, cleaning local config..." -ForegroundColor Yellow
+                Remove-Item "$RunnerPath\.runner" -Force -ErrorAction SilentlyContinue
+                Remove-Item "$RunnerPath\.credentials" -Force -ErrorAction SilentlyContinue
+                Remove-Item "$RunnerPath\.credentials_rsaparams" -Force -ErrorAction SilentlyContinue
             }
         }
     }
@@ -54,9 +65,12 @@ function Install-GitHubRunner {
     
     # Download
     Write-Host "Downloading runner..." -ForegroundColor Yellow
-    $runnerVersion = "2.321.0"
+    $runnerVersion = "2.332.0"
     $runnerUrl = "https://github.com/actions/runner/releases/download/v$runnerVersion/actions-runner-win-x64-$runnerVersion.zip"
     $runnerZip = "actions-runner-win-x64-$runnerVersion.zip"
+    
+    # Remove old zip files from previous versions
+    Get-ChildItem $RunnerPath -Filter "actions-runner-win-x64-*.zip" -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne $runnerZip } | Remove-Item -Force -ErrorAction SilentlyContinue
     
     if (-not (Test-Path $runnerZip)) {
         Invoke-WebRequest -Uri $runnerUrl -OutFile $runnerZip -ErrorAction Stop
@@ -125,9 +139,19 @@ function Uninstall-GitHubRunner {
         
         # Only try to remove from GitHub if we have valid config
         if ($Config.IsValid()) {
-            $removeToken = Get-RunnerRegistrationToken -Token $Config.GitHubToken -Repository $Config.Repository
+            $removeToken = Get-RunnerRemovalToken -Token $Config.GitHubToken -Repository $Config.Repository
+            $removeSuccess = $false
             if ($removeToken) {
                 & ".\config.cmd" remove --token $removeToken
+                if ($LASTEXITCODE -eq 0) {
+                    $removeSuccess = $true
+                }
+            }
+            if (-not $removeSuccess) {
+                Write-Host "Could not remove runner from GitHub, cleaning local config..." -ForegroundColor Yellow
+                Remove-Item "$RunnerPath\.runner" -Force -ErrorAction SilentlyContinue
+                Remove-Item "$RunnerPath\.credentials" -Force -ErrorAction SilentlyContinue
+                Remove-Item "$RunnerPath\.credentials_rsaparams" -Force -ErrorAction SilentlyContinue
             }
         } else {
             Write-Host "Skipping GitHub removal (no valid configuration)" -ForegroundColor Yellow

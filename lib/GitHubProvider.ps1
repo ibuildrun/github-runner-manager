@@ -285,10 +285,54 @@ class GitHubProvider : IPlatformProvider {
         }
     }
     
+    [string] GetRunnerRemovalToken([string]$Token, [string]$TargetPath, [string]$TargetType, [string]$InstanceUrl) {
+        if ([string]::IsNullOrWhiteSpace($Token)) {
+            throw [System.ArgumentException]::new("Token cannot be empty")
+        }
+        
+        if ([string]::IsNullOrWhiteSpace($TargetPath)) {
+            throw [System.ArgumentException]::new("Repository path cannot be empty")
+        }
+        
+        try {
+            $headers = @{
+                Authorization = "token $Token"
+                Accept = "application/vnd.github.v3+json"
+            }
+            
+            $uri = "https://api.github.com/repos/$TargetPath/actions/runners/remove-token"
+            
+            $response = Invoke-RestMethod `
+                -Uri $uri `
+                -Headers $headers `
+                -Method Post `
+                -ErrorAction Stop
+            
+            return $response.token
+        }
+        catch {
+            $statusCode = $_.Exception.Response.StatusCode.value__
+            $message = "Failed to get removal token: $($_.Exception.Message)"
+            
+            if ($statusCode -eq 401) {
+                throw [System.UnauthorizedAccessException]::new("Invalid token or token expired")
+            }
+            elseif ($statusCode -eq 403) {
+                throw [System.UnauthorizedAccessException]::new("Token lacks required permissions. Required scopes: repo, workflow")
+            }
+            elseif ($statusCode -eq 404) {
+                throw [System.IO.FileNotFoundException]::new("Repository not found or not accessible: $TargetPath")
+            }
+            else {
+                throw [System.Exception]::new($message)
+            }
+        }
+    }
+    
     [string] GetRunnerDownloadUrl([string]$Version, [string]$OS, [string]$Arch) {
         # Default values if not provided
         if ([string]::IsNullOrWhiteSpace($Version)) {
-            $Version = "2.311.0"
+            $Version = "2.332.0"
         }
         if ([string]::IsNullOrWhiteSpace($OS)) {
             $OS = "win"

@@ -2,7 +2,8 @@
 
 function Start-GitLabRunner {
     param(
-        [string]$RunnerPath = "C:\gitlab-runner"
+        [Parameter(Mandatory=$true)]
+        [string]$RunnerPath
     )
     
     Write-Host ""
@@ -11,15 +12,15 @@ function Start-GitLabRunner {
     $binaryPath = Join-Path $RunnerPath "gitlab-runner.exe"
     
     if (-not (Test-Path $binaryPath)) {
-        Write-Host "GitLab Runner not installed" -ForegroundColor Red
+        Write-Host "GitLab Runner not installed at: $RunnerPath" -ForegroundColor Red
         Write-Host "Please install runner first (option 5)" -ForegroundColor Yellow
         return
     }
     
-    # Check if already running
-    $process = Get-Process -Name "gitlab-runner" -ErrorAction SilentlyContinue
-    if ($process) {
-        Write-Host "Runner is already running (PID: $($process.Id))" -ForegroundColor Yellow
+    # Check if already running for this path
+    $alreadyRunning = Test-GitLabRunnerProcess -RunnerPath $RunnerPath
+    if ($alreadyRunning) {
+        Write-Host "Runner is already running at: $RunnerPath" -ForegroundColor Yellow
         return
     }
     
@@ -32,9 +33,9 @@ function Start-GitLabRunner {
         
         Start-Sleep -Seconds 2
         
-        $process = Get-Process -Name "gitlab-runner" -ErrorAction SilentlyContinue
-        if ($process) {
-            Write-Host "Runner started successfully (PID: $($process.Id))" -ForegroundColor Green
+        $proc = Find-GitLabRunnerProcess -RunnerPath $RunnerPath
+        if ($proc) {
+            Write-Host "Runner started successfully (PID: $($proc.Id))" -ForegroundColor Green
         } else {
             Write-Host "Runner failed to start" -ForegroundColor Red
         }
@@ -44,22 +45,27 @@ function Start-GitLabRunner {
 }
 
 function Stop-GitLabRunner {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$RunnerPath
+    )
+    
     Write-Host ""
-    Write-Host "Stopping GitLab Runner..." -ForegroundColor Yellow
+    Write-Host "Stopping GitLab Runner at: $RunnerPath" -ForegroundColor Yellow
     
-    $process = Get-Process -Name "gitlab-runner" -ErrorAction SilentlyContinue
+    $proc = Find-GitLabRunnerProcess -RunnerPath $RunnerPath
     
-    if (-not $process) {
-        Write-Host "Runner is not running" -ForegroundColor Yellow
+    if (-not $proc) {
+        Write-Host "Runner is not running at: $RunnerPath" -ForegroundColor Yellow
         return
     }
     
     try {
-        Stop-Process -Name "gitlab-runner" -Force
+        Stop-Process -Id $proc.Id -Force
         Start-Sleep -Seconds 2
         
-        $process = Get-Process -Name "gitlab-runner" -ErrorAction SilentlyContinue
-        if (-not $process) {
+        $proc = Find-GitLabRunnerProcess -RunnerPath $RunnerPath
+        if (-not $proc) {
             Write-Host "Runner stopped successfully" -ForegroundColor Green
         } else {
             Write-Host "Runner failed to stop" -ForegroundColor Red
@@ -69,9 +75,45 @@ function Stop-GitLabRunner {
     }
 }
 
+function Test-GitLabRunnerProcess {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$RunnerPath
+    )
+    
+    $proc = Find-GitLabRunnerProcess -RunnerPath $RunnerPath
+    return ($null -ne $proc)
+}
+
+function Find-GitLabRunnerProcess {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$RunnerPath
+    )
+    
+    $processes = Get-Process -Name "gitlab-runner" -ErrorAction SilentlyContinue
+    if (-not $processes) {
+        return $null
+    }
+    
+    foreach ($proc in $processes) {
+        try {
+            $procPath = $proc.Path
+            if ($procPath -and $procPath.StartsWith($RunnerPath, [StringComparison]::OrdinalIgnoreCase)) {
+                return $proc
+            }
+        } catch {
+            continue
+        }
+    }
+    
+    return $null
+}
+
 function Get-GitLabRunnerStatus {
     param(
-        [string]$RunnerPath = "C:\gitlab-runner"
+        [Parameter(Mandatory=$true)]
+        [string]$RunnerPath
     )
     
     Write-Host ""
@@ -99,13 +141,13 @@ function Get-GitLabRunnerStatus {
     
     Write-Host ""
     
-    # Check process
-    $process = Get-Process -Name "gitlab-runner" -ErrorAction SilentlyContinue
-    if ($process) {
-        Write-Host "Process: Running (PID: $($process.Id))" -ForegroundColor Green
-        Write-Host "Memory: $([math]::Round($process.WorkingSet64 / 1MB, 2)) MB" -ForegroundColor Cyan
+    # Check process for this specific path
+    $proc = Find-GitLabRunnerProcess -RunnerPath $RunnerPath
+    if ($proc) {
+        Write-Host "Process: Running (PID: $($proc.Id))" -ForegroundColor Green
+        Write-Host "Memory: $([math]::Round($proc.WorkingSet64 / 1MB, 2)) MB" -ForegroundColor Cyan
         
-        $uptime = (Get-Date) - $process.StartTime
+        $uptime = (Get-Date) - $proc.StartTime
         Write-Host "Uptime: $($uptime.Days)d $($uptime.Hours)h $($uptime.Minutes)m" -ForegroundColor Cyan
     } else {
         Write-Host "Process: Not running" -ForegroundColor Yellow
@@ -137,7 +179,8 @@ function Get-GitLabRunnerStatus {
 
 function Show-GitLabRunnerLogs {
     param(
-        [string]$RunnerPath = "C:\gitlab-runner",
+        [Parameter(Mandatory=$true)]
+        [string]$RunnerPath,
         [int]$Lines = 50
     )
     

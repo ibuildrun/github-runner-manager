@@ -214,8 +214,15 @@ function Select-ActiveRunner {
         $Config.SetActiveRunner($selectedRunner.Id)
         $Config.Repository = $selectedRunner.Repository
         
+        # Switch platform if runner has a different one
+        if ($selectedRunner.Platform -and $selectedRunner.Platform -ne $Config.Platform) {
+            $Config.Platform = $selectedRunner.Platform
+            Write-Host "Platform switched to: $($selectedRunner.Platform)" -ForegroundColor Yellow
+        }
+        
         Write-Host ""
         Write-Host "Active runner set to: $($selectedRunner.Name)" -ForegroundColor Green
+        Write-Host "Repository: $($selectedRunner.Repository)" -ForegroundColor Cyan
     } else {
         Write-Host "Invalid selection" -ForegroundColor Red
     }

@@ -56,6 +56,23 @@ function Get-RunnerRegistrationToken {
     }
 }
 
+function Get-RunnerRemovalToken {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Token,
+        [Parameter(Mandatory=$true)]
+        [string]$Repository
+    )
+    
+    try {
+        $removalToken = $script:GitHubProviderInstance.GetRunnerRemovalToken($Token, $Repository, "repository", "")
+        return $removalToken
+    } catch {
+        Write-Host "Error getting removal token: $_" -ForegroundColor Red
+        return $null
+    }
+}
+
 function Test-GitHubToken {
     param(
         [Parameter(Mandatory=$true)]

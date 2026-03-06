@@ -9,7 +9,8 @@ function Install-GitLabRunner {
     param(
         [Parameter(Mandatory=$true)]
         $Config,
-        [string]$RunnerPath = "C:\gitlab-runner"
+        [Parameter(Mandatory=$true)]
+        [string]$RunnerPath
     )
     
     Write-Host ""
@@ -160,7 +161,8 @@ function Install-GitLabRunner {
 
 function Uninstall-GitLabRunner {
     param(
-        [string]$RunnerPath = "C:\gitlab-runner"
+        [Parameter(Mandatory=$true)]
+        [string]$RunnerPath
     )
     
     Write-Host ""

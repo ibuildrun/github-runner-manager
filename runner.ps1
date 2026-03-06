@@ -126,18 +126,18 @@ do {
             $config.Save("None")
         }
         "5" { 
+            $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
             if ($config.Platform -eq "gitlab") {
-                Install-GitLabRunner -Config $config -RunnerPath "C:\gitlab-runner"
+                Install-GitLabRunner -Config $config -RunnerPath $effectiveRunnerPath
             } else {
-                $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
                 Install-GitHubRunner -Config $config -RunnerPath $effectiveRunnerPath
             }
         }
         "6" { 
+            $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
             if ($config.Platform -eq "gitlab") {
-                Start-GitLabRunner -RunnerPath "C:\gitlab-runner"
+                Start-GitLabRunner -RunnerPath $effectiveRunnerPath
             } else {
-                $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
                 Start-GitHubRunner -Config $config -RunnerPath $effectiveRunnerPath
             }
             
@@ -150,10 +150,10 @@ do {
             }
         }
         "7" { 
+            $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
             if ($config.Platform -eq "gitlab") {
-                Stop-GitLabRunner
+                Stop-GitLabRunner -RunnerPath $effectiveRunnerPath
             } else {
-                $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
                 Stop-GitHubRunner -Config $config -RunnerPath $effectiveRunnerPath
             }
             
@@ -166,18 +166,18 @@ do {
             }
         }
         "8" { 
+            $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
             if ($config.Platform -eq "gitlab") {
-                Get-GitLabRunnerStatus -RunnerPath "C:\gitlab-runner"
+                Get-GitLabRunnerStatus -RunnerPath $effectiveRunnerPath
             } else {
-                $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
                 Show-Status -Config $config -RunnerPath $effectiveRunnerPath
             }
         }
         "9" { 
+            $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
             if ($config.Platform -eq "gitlab") {
-                Show-GitLabRunnerLogs -RunnerPath "C:\gitlab-runner"
+                Show-GitLabRunnerLogs -RunnerPath $effectiveRunnerPath
             } else {
-                $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
                 Show-RunnerLogs -RunnerPath $effectiveRunnerPath
             }
         }
@@ -207,10 +207,10 @@ do {
             Disable-RunnerAutoStart -Config $config
         }
         "13" { 
+            $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
             if ($config.Platform -eq "gitlab") {
-                Uninstall-GitLabRunner -RunnerPath "C:\gitlab-runner"
+                Uninstall-GitLabRunner -RunnerPath $effectiveRunnerPath
             } else {
-                $effectiveRunnerPath = Get-EffectiveRunnerPath -Config $config -DefaultPath $RunnerPath
                 Uninstall-GitHubRunner -Config $config -RunnerPath $effectiveRunnerPath
             }
         }
