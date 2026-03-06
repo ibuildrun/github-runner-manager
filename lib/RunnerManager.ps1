@@ -9,17 +9,37 @@ function Start-GitHubRunner {
     )
     
     Write-Host ""
-    Write-Host "Starting runner..." -ForegroundColor Cyan
+    Write-Host "Starting runner at: $RunnerPath" -ForegroundColor Cyan
     
     if (-not (Test-Path "$RunnerPath\run.cmd")) {
         Write-Host "Runner not installed. Please install first." -ForegroundColor Red
         return
     }
     
-    # Check if scheduled task exists
+    # Check if this runner is already running
+    $alreadyRunning = Test-RunnerProcess -RunnerPath $RunnerPath
+    if ($alreadyRunning) {
+        $existingProc = Get-Process -Name "Runner.Listener" -ErrorAction SilentlyContinue | Where-Object {
+            try { $_.Path -and $_.Path.StartsWith($RunnerPath, [StringComparison]::OrdinalIgnoreCase) } catch { $false }
+        } | Select-Object -First 1
+        Write-Host "Runner is already running (PID: $($existingProc.Id))" -ForegroundColor Yellow
+        return
+    }
+    
+    # Check if scheduled task exists AND points to this runner path
     $taskName = Get-ScheduledTaskName -Repository $Config.Repository
     $task = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+    $useTask = $false
+    
     if ($task) {
+        # Verify the task action points to the correct runner path
+        $taskAction = $task.Actions | Select-Object -First 1
+        if ($taskAction -and $taskAction.Arguments -and $taskAction.Arguments -like "*$RunnerPath*") {
+            $useTask = $true
+        }
+    }
+    
+    if ($useTask) {
         Start-ScheduledTask -TaskName $taskName
         Write-Host "Scheduled task triggered, waiting for runner process..." -ForegroundColor Yellow
     } else {
