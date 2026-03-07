@@ -7,7 +7,7 @@ function Test-AdminPrivileges {
     if (-not $isAdmin) {
         Write-Host "Error: This operation requires Administrator privileges" -ForegroundColor Red
         Write-Host "Please run PowerShell as Administrator" -ForegroundColor Yellow
-        Read-Host (L "press_enter")
+        $null = Read-Host (L "press_enter")
         return $false
     }
     return $true
