@@ -2,6 +2,17 @@
 
 . "$PSScriptRoot\Config.ps1"
 
+function Test-AdminPrivileges {
+    $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
+    if (-not $isAdmin) {
+        Write-Host "Error: This operation requires Administrator privileges" -ForegroundColor Red
+        Write-Host "Please run PowerShell as Administrator" -ForegroundColor Yellow
+        Read-Host (L "press_enter")
+        return $false
+    }
+    return $true
+}
+
 function Enable-RunnerAutoStart {
     param(
         [Parameter(Mandatory=$true)]
